@@ -1,0 +1,7 @@
+fan-tools
+fastapi
+httpx
+uvicorn
+
+pytest
+pytest-asyncio
