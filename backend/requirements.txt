@@ -4,11 +4,6 @@
 #
 #    pip-compile --output-file=backend/requirements.txt backend/requirements.in
 #
---index-url https://pypi.python.org/simple/
---trusted-host pypi.python.org
---trusted-host pypi.org
---trusted-host files.pythonhosted.org
-
 anyio==3.6.2
     # via
     #   httpcore
@@ -43,6 +38,8 @@ iniconfig==1.1.1
     # via pytest
 packaging==21.3
     # via pytest
+pillow==9.3.0
+    # via -r backend/requirements.in
 pluggy==1.0.0
     # via pytest
 pydantic==1.10.2

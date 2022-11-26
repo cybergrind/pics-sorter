@@ -2,6 +2,7 @@ fan-tools
 fastapi
 httpx
 uvicorn
+pillow
 
 pytest
 pytest-asyncio
