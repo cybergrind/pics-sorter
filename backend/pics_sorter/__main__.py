@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import argparse
 import logging
 from pathlib import Path
 
 import uvicorn
+from pics_sorter.const import AppConfig
 
 from .app import get_app
 
@@ -12,22 +12,28 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(n
 log = logging.getLogger('main')
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='DESCRIPTION')
-    parser.add_argument('directory', type=Path)
-    return parser.parse_args()
-
-
 def main():
-    args = parse_args()
-    log.debug('app is ok')
-    if not args.directory.exists():
-        log.error(f'"{args.directory}" does not exist')
+    app_config = AppConfig()
+
+    log.debug(f'app is ok. directory={app_config.static_dir.absolute()}')
+    if not app_config.static_dir.exists():
+        log.error(f'"{app_config.static_dir}" does not exist')
         exit(1)
 
-    app = get_app('frontend/build', args.directory)
-    uvicorn.run(app, host='0.0.0.0', port=8006)
+    app = get_app(app_config)
+    return app
+
+
+def uvicorn_main():
+    uvicorn.run(
+        'pics_sorter.__main__:main',
+        factory=True,
+        host='0.0.0.0',
+        port=8006,
+        reload_dirs=['backend'],
+        reload=True,
+    )
 
 
 if __name__ == '__main__':
-    main()
+    uvicorn_main()

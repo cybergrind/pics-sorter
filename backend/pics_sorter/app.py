@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pics_sorter.const import AppConfig
 
 from .controller import PicsController
 
@@ -39,10 +40,16 @@ async def get_html(req: Request):
     return HTMLResponse(f'''<!DOCTYPE html><html><body>{links}</body><html>''')
 
 
-def get_app(static_dir: Path, pics_dir: Path) -> FastAPI:
+def get_app(app_config: AppConfig) -> FastAPI:
     app = FastAPI()
-    app_ctx.set({'dir': pics_dir, 'controller': PicsController(pics_dir)})
-    app.mount('/static', StaticFiles(directory=static_dir), name='static')
-    app.mount('/pics', StaticFiles(directory=pics_dir), name=DIR)
+    app_ctx.set(
+        {
+            'dir': app_config.pics_dir,
+            'controller': PicsController(app_config.pics_dir),
+            'app_config': app_config,
+        }
+    )
+    app.mount('/static', StaticFiles(directory=app_config.static_dir), name='static')
+    app.mount('/pics', StaticFiles(directory=app_config.pics_dir), name=DIR)
     app.include_router(root)
     return app

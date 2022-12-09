@@ -11,4 +11,7 @@ venv: backend/requirements.txt
 .PHONY: run
 
 run: venv
+	uvicorn --reload --reload-dir backend/pics_sorter --factory 'pics_sorter.__main__:main'
+
+run_python:
 	python3 -m pics_sorter $(PICS_DIR)
