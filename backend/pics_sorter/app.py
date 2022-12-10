@@ -2,8 +2,8 @@ import logging
 from contextvars import ContextVar
 from pathlib import Path
 
-from fastapi import APIRouter, FastAPI, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pics_sorter.const import AppConfig
 
@@ -30,7 +30,9 @@ def get_links(req: Request, num=10):
 
 @root.get('/')
 async def index(req: Request):
-    return {'success': True, 'images': get_links(req)}
+    #return {'success': True, 'images': get_links(req)}
+    return FileResponse(app_ctx.get()['app_config'].static_dir / 'index.html')
+    
 
 
 @root.get('/html')

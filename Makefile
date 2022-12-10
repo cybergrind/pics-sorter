@@ -15,3 +15,7 @@ run: venv
 
 run_python:
 	python3 -m pics_sorter $(PICS_DIR)
+
+
+build-front:
+	cd frontend/pics-sorter && pnpm run build
