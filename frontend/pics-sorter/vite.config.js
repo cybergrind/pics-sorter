@@ -6,8 +6,13 @@ const config = {
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
 	},
-  build: {
-    emptyOutDir: false,
+//  build: {
+//    emptyOutDir: false,
+//  },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:8000',
+    }
   }
 };
 
