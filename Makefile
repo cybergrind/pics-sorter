@@ -10,12 +10,15 @@ venv: backend/requirements.txt
 
 .PHONY: run
 
-run: venv
+run: venv frontend/pics-sorter/build/index.html
 	uvicorn --reload --reload-dir backend/pics_sorter --factory 'pics_sorter.__main__:main'
 
 run_python:
 	python3 -m pics_sorter $(PICS_DIR)
 
 
-build-front:
+build-front: frontend/pics-sorter/build/index.html
+
+
+frontend/pics-sorter/build/index.html: frontend/pics-sorter/src/**/*
 	cd frontend/pics-sorter && pnpm run build
