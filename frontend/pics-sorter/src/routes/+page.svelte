@@ -46,8 +46,7 @@
 
   const toggleOrZoomOut = () => {
     const zz = document.querySelector('#zoomed-img')
-    console.log(zz.style.transform)
-    if (zz && zz.style.transform.indexOf('scale(1)') === -1) {
+    if (zz && zz.style.transform && zz.style.transform.indexOf('scale(1)') === -1) {
       for (let i = 0; i < 10; i++) {
         zoom.zoomOut()
       }
@@ -60,16 +59,16 @@
 
 {#if single }
     <div
-        use:shortcut={{code: 'Space', callback: async () => single = undefined}}
-        use:shortcut={{code: 'KeyF', callback: () => single = undefined }}
-        use:shortcut={{code: 'KeyD', callback: () => single = undefined }}
-        use:shortcut={{code: 'KeyS', callback: () => single = undefined }}
-        use:swipe={{ timeframe: 300, minSwipeDistance: 80 }}
-        on:swipe={swipeHandler}
-        on:click={toggleOrZoomOut}
+      use:shortcut={{code: 'Space', callback: async () => single = undefined}}
+      use:shortcut={{code: 'KeyF', callback: () => single = undefined }}
+      use:shortcut={{code: 'KeyD', callback: () => single = undefined }}
+      use:shortcut={{code: 'KeyS', callback: () => single = undefined }}
+      use:swipe={{ timeframe: 300, minSwipeDistance: 80 }}
+      on:click={toggleOrZoomOut}
+      on:swipe={swipeHandler}
      >
-        <Zoom src={single} bind:this={zoom} on:load={() => console.log('on Load')}
-            id="zoomed-img"/>
+    <Zoom src={single} bind:this={zoom} on:load={() => console.log('on Load')}
+      id="zoomed-img"/>
    </div>
 {:else if pics.images && pics.images.length > 0}
     <div class="container"
