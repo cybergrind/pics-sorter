@@ -1,8 +1,8 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlmodel import SQLModel
 from sqlalchemy import create_engine
+from sqlmodel import SQLModel
 
 
 # this is the Alembic Config object, which provides
@@ -38,7 +38,11 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    from pics_sorter.const import AppConfig
+    from pics_sorter.models import get_connection_string
+
+    url = get_connection_string(AppConfig(), is_async=False)
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -50,6 +54,13 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def include_name(name, type_, parent_names):
+    if type_ == "table":
+        return name in target_metadata.tables
+    else:
+        return True
+
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
@@ -59,17 +70,23 @@ def run_migrations_online() -> None:
     """
     from pics_sorter.const import AppConfig
     from pics_sorter.models import get_connection_string
-    
+
     connectable = create_engine(get_connection_string(AppConfig(), is_async=False))
-    #engine_from_config(
+    # engine_from_config(
     #    #config.get_section(config.config_ini_section),
     #    {'url': get_connection_string(AppConfig())},
     #    poolclass=pool.NullPool,
-    #)
+    # )
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            dialect_name='sqlite3',
+            target_metadata=target_metadata,
+            compare_type=False,
+            compare_server_default=False,
+            include_schemas=True,
+            include_name=include_name,
         )
 
         with context.begin_transaction():

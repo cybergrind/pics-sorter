@@ -1,5 +1,4 @@
 import logging
-from contextvars import ContextVar
 from functools import partial
 from pathlib import Path
 from elo import rate, WIN, DRAW, LOSS
@@ -13,9 +12,9 @@ from sqlalchemy.orm import Session
 
 from .controller import PicsController
 from .models import setup_engine
+from .const import app_ctx
 
 
-app_ctx = ContextVar('app_ctx', default={})
 DIR = 'pics'
 
 
@@ -56,14 +55,16 @@ async def get_html(req: Request):
 async def ws(sock: WebSocket):
     await sock.accept()
     await sock.send_json({'type': 'echo'})
+    controller: PicsController = app_ctx.get()['controller']
 
     while True:
         msg = await sock.receive_json()
-        if msg['event'] == 'rate':
-            controller: PicsController = app_ctx.get()['controller']
-            
+        event = msg.get('event')
+        if event == 'rate':
             await controller.rate(msg['winner'], msg['loosers'])
             await sock.send_json({'event': 'rate_success'})
+        elif event == 'hide':
+            await controller.hide(msg['image'])
 
 
 async def close_session(db: AsyncSession):

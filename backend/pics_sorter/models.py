@@ -24,8 +24,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 class Image(Base):
     __tablename__ = "images"
+    __table_args__ = {"sqlite_autoincrement": True}
 
-    id = db.Column('id', db.Integer, db.Identity(always=True), primary_key=True)
+    id = db.Column('id', db.Integer, autoincrement=True, primary_key=True)
     path = db.Column(db.String(1024), nullable=False, unique=True)
     height = db.Column(db.Integer, nullable=False)
     width = db.Column(db.Integer, nullable=False)
@@ -34,6 +35,8 @@ class Image(Base):
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
     shown_times = db.Column(db.Integer, nullable=False, default=0, index=True)
     elo_rating = db.Column(db.Integer, nullable=False, default=1200, index=True)
+    hidden = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    sha1_hash = db.Column(db.String(40), nullable=True, index=True)
 
 
 def get_connection_string(config: AppConfig, is_async=True):

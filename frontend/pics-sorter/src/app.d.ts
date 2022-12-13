@@ -7,3 +7,12 @@ declare namespace App {
 	// interface PageData {}
 	// interface Platform {}
 }
+
+interface Element {
+    style: CSSStyleDeclaration
+}
+
+interface Zoom {
+	zoomIn: () => void
+	zoomOut: () => void
+}

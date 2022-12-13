@@ -6,13 +6,13 @@ export const picsStore = writable({})
 
 let _pics
 picsStore.subscribe((value) => {
-	_pics = value.images
+	_pics = value
 })
 
 export async function getPics() {
 	const response = await axios.get(`${window.location.origin}/api/pics/`)
 	console.log(response.data)
-	picsStore.set(response.data)
+	picsStore.set(response.data.images)
 }
 
 const MAX_EVENTS = 10
@@ -27,7 +27,7 @@ export const addEvent = (event) => {
 	console.log('Event: ', event)
 
 	if (event.event === 'rate_success') {
-    getPics()
+		getPics()
 	}
 }
 
@@ -47,4 +47,8 @@ export const setWinner = (winner) => {
 	const loosersObjs = _pics.filter((pic) => pic.path !== winner.path)
 	const loosers = loosersObjs.map((v) => v.path)
 	_ws.send(JSON.stringify({ event: 'rate', winner: winner.path, loosers }))
+}
+
+export const sendMsg = (msg) => {
+	_ws.send(JSON.stringify(msg))
 }

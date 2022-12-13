@@ -1,38 +1,42 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
-	import { picsStore, getPics, connectWS, setWinner } from '../stores.ts'
-	import { shortcut } from '../hotkeys.ts'
+	import { picsStore, getPics, connectWS, setWinner, sendMsg } from '../stores'
+	import { shortcut } from '../hotkeys'
 	import { swipe, pinch } from 'svelte-gestures'
 	import Zoom from 'svelte-zoom'
+
+	import type { Image } from '../types'
 
 	onMount(async () => {
 		await getPics()
 		connectWS()
 	})
 
-	let pics, single, index
-	let zoom
-	picsStore.subscribe((value) => {
+	let pics: Image[], single: Image | undefined, index: number | undefined
+	let zoom: Zoom | undefined
+
+	picsStore.subscribe((value: Image[]) => {
 		pics = value
 		if (single) {
 			index = 0
-			single = pics.images[index]
+			single = pics[index]
 		}
 	})
 
 	const nextSingle = () => {
 		if (index === undefined) {
-			index = pics.images.indexOf(single)
+			index = pics.indexOf(single)
 		}
-		index = (index + 1) % pics.images.length
-		single = pics.images[index]
+		index = (index + 1) % pics.length
+		single = pics[index]
 	}
+
 	const prevSingle = () => {
 		if (index === undefined) {
-			index = pics.images.indexOf(single)
+			index = pics.indexOf(single)
 		}
-		index = (index - 1 + pics.images.length) % pics.images.length
-		single = pics.images[index]
+		index = (index - 1 + pics.length) % pics.length
+		single = pics[index]
 	}
 
 	const closeSingle = () => {
@@ -53,29 +57,25 @@
 			return true
 		}
 		const zz = document.querySelector('#zoomed-img')
-		if (zz.style.transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
+		if (zz?.style.transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
 			return
 		}
 		if (index === undefined) {
-			index = pics.images.indexOf(single)
+			index = pics.indexOf(single)
 		}
 		if (index >= 2) {
 			await getPics()
 			index = -1
 		}
 		index += 1
-		single = pics.images[index]
-	}
-
-	const pinchHandler = (event) => {
-		zoom = Math.min(zoom * event.detail.scale, 1)
+		single = pics[index]
 	}
 
 	const toggleOrZoomOut = () => {
 		const zz = document.querySelector('#zoomed-img')
 		if (zz && zz.style.transform && zz.style.transform.indexOf('scale(1)') === -1) {
 			for (let i = 0; i < 10; i++) {
-				zoom.zoomOut()
+				zoom?.zoomOut()
 			}
 		} else {
 			closeSingle()
@@ -108,8 +108,16 @@
 				prevSingle()
 			}
 		}}
-		use:swipe={{ timeframe: 300, minSwipeDistance: 80 }}
+		use:shortcut={{
+			code: 'Digit6',
+			callback: async () => {
+				sendMsg({'event': 'hide', 'image': single?.path})
+				await getPics()
+			}
+		}}
+		use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}
 		on:click={toggleOrZoomOut}
+		aria-hidden="true"
 		on:swipe={swipeHandler}
 	>
 		<Zoom
@@ -119,24 +127,25 @@
 			id="zoomed-img"
 		/>
 	</div>
-{:else if pics.images && pics.images.length > 0}
+{:else if pics && pics.length > 0}
 	<div
 		class="container"
 		use:shortcut={{ code: 'Space', callback: async () => getPics() }}
-		use:shortcut={{ code: 'KeyR', callback: () => setWinner(pics.images[2]) }}
-		use:shortcut={{ code: 'KeyE', callback: () => setWinner(pics.images[1]) }}
-		use:shortcut={{ code: 'KeyW', callback: () => setWinner(pics.images[0]) }}
-		use:shortcut={{ code: 'KeyF', callback: () => (single = pics.images[2]) }}
-		use:shortcut={{ code: 'KeyD', callback: () => (single = pics.images[1]) }}
-		use:shortcut={{ code: 'KeyS', callback: () => (single = pics.images[0]) }}
-		use:shortcut={{ code: 'KeyA', callback: () => (single = pics.images[0]) }}
+		use:shortcut={{ code: 'KeyR', callback: () => setWinner(pics[2]) }}
+		use:shortcut={{ code: 'KeyE', callback: () => setWinner(pics[1]) }}
+		use:shortcut={{ code: 'KeyW', callback: () => setWinner(pics[0]) }}
+		use:shortcut={{ code: 'KeyF', callback: () => (single = pics[2]) }}
+		use:shortcut={{ code: 'KeyD', callback: () => (single = pics[1]) }}
+		use:shortcut={{ code: 'KeyS', callback: () => (single = pics[0]) }}
+		use:shortcut={{ code: 'KeyA', callback: () => (single = pics[0]) }}
 	>
-		{#each pics.images as image}
+		{#each pics as image}
 			<div class="img-fit">
 				<button on:click={() => setWinner(image)}>win</button>
 				<img
 					src={image.link}
 					alt="some picture"
+					aria-hidden="true"
 					on:click={() => {
 						console.log('Image:', image)
 						single = image
@@ -156,17 +165,6 @@
 		flex-flow: row wrap;
 		align-items: center;
 		padding: 0;
-	}
-	.full-div {
-	}
-	.img-full {
-		height: 100vh;
-		width: auto;
-		margin-left: auto;
-		margin-right: auto;
-		display: block;
-	}
-	.img-zoomed {
 	}
 	.img-fit {
 		max-width: 33%;
