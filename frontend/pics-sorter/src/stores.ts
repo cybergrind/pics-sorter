@@ -3,6 +3,7 @@ import axios from 'axios'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 
 export const picsStore = writable({})
+export const sameOrientation = writable(0)
 
 let _pics
 picsStore.subscribe((value) => {
@@ -13,6 +14,7 @@ export async function getPics() {
 	const response = await axios.get(`${window.location.origin}/api/pics/`)
 	console.log(response.data)
 	picsStore.set(response.data.images)
+	sameOrientation.set(response.data.same_orientation)
 }
 
 const MAX_EVENTS = 10

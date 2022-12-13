@@ -39,6 +39,7 @@ class PicsController:
         self.db: AsyncSession = db
         self.hidden_dir = self.path / HIDDEN_DIR
         self.hidden_dir.mkdir(exist_ok=True)
+        self.same_orientation = 0
 
         random.shuffle(all_images)
         self.iterator = iter(all_images)
@@ -79,11 +80,14 @@ class PicsController:
                 yield fpath
 
     async def get_relative_images(self, num):
-        q = (
-            select(Image)
-            .order_by(Image.shown_times.asc(), Image.elo_rating.asc(), ~Image.hidden)
-            .limit(num)
-        )
+        order_by = [Image.shown_times.asc(), Image.elo_rating.asc()]
+        if self.same_orientation:
+            if self.same_orientation == 1:
+                order_by.append(Image.orientation.asc())
+            else:
+                order_by.append(Image.orientation.desc())
+
+        q = select(Image).filter(~Image.hidden).order_by(*order_by).limit(num)
         images = (await self.db.exec(q)).all()
         return images
 

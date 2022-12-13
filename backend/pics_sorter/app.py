@@ -1,8 +1,8 @@
 import logging
 from functools import partial
 from pathlib import Path
-from elo import rate, WIN, DRAW, LOSS
 
+from elo import DRAW, LOSS, rate, WIN
 from fastapi import APIRouter, FastAPI, Request, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -10,9 +10,9 @@ from pics_sorter.const import AppConfig
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
+from .const import app_ctx
 from .controller import PicsController
 from .models import setup_engine
-from .const import app_ctx
 
 
 DIR = 'pics'
@@ -41,8 +41,9 @@ async def index():
 
 @root.get('/api/pics/')
 async def pics(req: Request):
+    controller: PicsController = app_ctx.get()['controller']
     images = await get_links(req, num=3)
-    return {'success': True, 'images': images}
+    return {'success': True, 'images': images, 'same_orientation': controller.same_orientation}
 
 
 @root.get('/html')
@@ -50,6 +51,7 @@ async def get_html(req: Request):
     urls = get_links(req)
     links = ''.join(f'<a href="{x}">link</a><br/>' for x in urls)
     return HTMLResponse(f'''<!DOCTYPE html><html><body>{links}</body><html>''')
+
 
 @root.websocket('/ws')
 async def ws(sock: WebSocket):
@@ -65,6 +67,8 @@ async def ws(sock: WebSocket):
             await sock.send_json({'event': 'rate_success'})
         elif event == 'hide':
             await controller.hide(msg['image'])
+        elif event == 'toggle_orientation':
+            controller.same_orientation = (controller.same_orientation + 1) % 3
 
 
 async def close_session(db: AsyncSession):

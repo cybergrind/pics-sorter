@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
-	import { picsStore, getPics, connectWS, setWinner, sendMsg } from '../stores'
+	import { picsStore, getPics, connectWS, setWinner, sendMsg, sameOrientation } from '../stores'
 	import { shortcut } from '../hotkeys'
 	import { swipe, pinch } from 'svelte-gestures'
 	import Zoom from 'svelte-zoom'
@@ -81,6 +81,10 @@
 			closeSingle()
 		}
 	}
+	const toggleOrientation = async () => {
+		await sendMsg({ event: 'toggle_orientation' })
+		await getPics()
+	}
 </script>
 
 {#if single}
@@ -111,7 +115,7 @@
 		use:shortcut={{
 			code: 'Digit6',
 			callback: async () => {
-				sendMsg({'event': 'hide', 'image': single?.path})
+				sendMsg({ event: 'hide', image: single?.path })
 				await getPics()
 			}
 		}}
@@ -128,6 +132,13 @@
 		/>
 	</div>
 {:else if pics && pics.length > 0}
+	<button on:click={toggleOrientation}>
+		{#if $sameOrientation}
+			Orientation {$sameOrientation}
+		{:else}
+			No Orientation
+		{/if}
+	</button>
 	<div
 		class="container"
 		use:shortcut={{ code: 'Space', callback: async () => getPics() }}
@@ -141,7 +152,8 @@
 	>
 		{#each pics as image}
 			<div class="img-fit">
-				<button on:click={() => setWinner(image)}>win</button>
+				<!--><button on:click={() => setWinner(image)}>win</button><-->
+
 				<img
 					src={image.link}
 					alt="some picture"
@@ -168,10 +180,10 @@
 	}
 	.img-fit {
 		max-width: 33%;
-		max-height: 33%;
+		max-height: 32%;
 	}
 	.img-fit > img {
-		max-width: 100%;
-		max-height: 100%;
+		max-width: 33vw;
+		max-height: 97vh;
 	}
 </style>
