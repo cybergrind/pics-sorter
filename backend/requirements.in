@@ -3,6 +3,14 @@ fastapi
 httpx
 uvicorn
 pillow
+websockets
+git+https://github.com/masfaraud/elo
+
+sqlmodel
+databases
+sqlalchemy
+alembic
+aiosqlite
 
 pytest
 pytest-asyncio

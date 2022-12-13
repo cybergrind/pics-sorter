@@ -1,4 +1,5 @@
 PICS_DIR ?=
+MESSAGE ?=
 
 backend/requirements.txt: backend/requirements.in
 	pip-compile -o backend/requirements.txt backend/requirements.in
@@ -22,3 +23,11 @@ build-front: frontend/pics-sorter/build/index.html
 
 frontend/pics-sorter/build/index.html: frontend/pics-sorter/src/**/*
 	cd frontend/pics-sorter && pnpm run build
+
+
+generate-migration:
+	@if [ -z "$(MESSAGE)" ]; then echo "MESSAGE is not defined"; exit 1; fi
+	alembic revision --autogenerate -m "$(MESSAGE)"
+
+migrate:
+	alembic upgrade head
