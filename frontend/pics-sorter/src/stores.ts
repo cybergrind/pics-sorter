@@ -1,11 +1,12 @@
-import { writable } from 'svelte/store'
+import { writable, type Writable } from 'svelte/store'
 import axios from 'axios'
 import ReconnectingWebSocket from 'reconnecting-websocket'
+import type { Image } from './types'
 
-export const picsStore = writable({})
+export const picsStore: Writable<Image[]> = writable([])
 export const sameOrientation = writable(0)
 
-let _pics
+let _pics: Image[]
 picsStore.subscribe((value) => {
 	_pics = value
 })
@@ -45,12 +46,12 @@ export const connectWS = () => {
 	})
 }
 
-export const setWinner = (winner) => {
+export const setWinner = (winner:Image) => {
 	const loosersObjs = _pics.filter((pic) => pic.path !== winner.path)
 	const loosers = loosersObjs.map((v) => v.path)
 	_ws.send(JSON.stringify({ event: 'rate', winner: winner.path, loosers }))
 }
 
-export const sendMsg = (msg) => {
+export const sendMsg = (msg:{event: string}) => {
 	_ws.send(JSON.stringify(msg))
 }

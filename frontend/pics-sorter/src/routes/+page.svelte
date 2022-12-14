@@ -24,6 +24,9 @@
 	})
 
 	const nextSingle = () => {
+		if (single === undefined) {
+			single = pics[0]
+		}
 		if (index === undefined) {
 			index = pics.indexOf(single)
 		}
@@ -32,6 +35,9 @@
 	}
 
 	const prevSingle = () => {
+		if (single === undefined) {
+			single = pics[pics.length - 1]
+		}
 		if (index === undefined) {
 			index = pics.indexOf(single)
 		}
@@ -96,6 +102,9 @@
 		use:shortcut={{
 			code: 'KeyG',
 			callback: () => {
+				if (single === undefined) {
+					return
+				}
 				setWinner(single)
 				nextSingle()
 			}

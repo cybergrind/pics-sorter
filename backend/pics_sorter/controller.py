@@ -55,10 +55,28 @@ class PicsController:
 
                     q = select(Image).filter_by(sha1_hash=sha1_hash)
                     duplicate_image = (await self.db.exec(q)).first()
-                    if not (self.path / duplicate_image.path).exists():
+                    if duplicate_image:
+                        duplicate_exists = (self.path / duplicate_image.path).exists()
+                    else:
+                        duplicate_exists = False
+
+
+                    if duplicate_image and not duplicate_exists:
                         log.info(f'Moved image: {duplicate_image.path} => {rel_path}')
                         image = duplicate_image
                         image.path = rel_path
+                    elif duplicate_exists:
+                        image = Image(
+                            path=rel_path,
+                            width=width,
+                            height=height,
+                            orientation=orientation,
+                            sha1_hash=sha1_hash,
+                        )
+                        self.db.add(image)
+                        self.db.commit()
+                        log.info(f'Hide duplicated: {rel_path=} vs {duplicate_image.path=}')
+                        await self.hide(rel_path)
                     else:
                         image = Image(
                             path=rel_path,
