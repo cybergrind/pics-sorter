@@ -10,8 +10,10 @@ const config = {
 //    emptyOutDir: false,
 //  },
   server: {
+    host: '0.0.0.0',
     proxy: {
       '/api': 'http://localhost:8000',
+      '/pics': 'http://localhost:8000',
       '/ws': {
         target: 'ws://localhost:8000',
         ws: true

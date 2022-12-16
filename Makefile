@@ -5,14 +5,14 @@ backend/requirements.txt: backend/requirements.in
 	pip-compile -o backend/requirements.txt backend/requirements.in
 
 venv: backend/requirements.txt
-	python3 -m venv venv
+	python3.11 -m venv venv
 	./venv/bin/pip install -r backend/requirements.txt
 	touch venv
 
 .PHONY: run
 
 run: venv frontend/pics-sorter/build/index.html
-	uvicorn --host=0.0.0.0 --reload --reload-dir backend/pics_sorter --factory 'pics_sorter.__main__:main'
+	uvicorn --host=::1 --reload --reload-dir backend/pics_sorter --factory 'pics_sorter.__main__:main'
 
 run_python:
 	python3 -m pics_sorter $(PICS_DIR)

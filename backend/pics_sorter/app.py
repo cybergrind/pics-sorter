@@ -31,7 +31,7 @@ def to_link(url_for, rel_image):
 async def get_links(req: Request, num=10):
     controller: PicsController = app_ctx.get()['controller']
     images = await controller.get_relative_images(num)
-    return [{'link': to_link(req.url_for, x.path), 'path': x.path} for x in images]
+    return [{'link': to_link(req.app.url_path_for, x.path), 'path': x.path} for x in images]
 
 
 @root.get('/')

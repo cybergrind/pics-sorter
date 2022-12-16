@@ -12,6 +12,8 @@
 		connectWS()
 	})
 
+	let w, h
+
 	let pics: Image[], single: Image | undefined, index: number | undefined
 	let zoom: Zoom | undefined
 
@@ -77,13 +79,19 @@
 		single = pics[index]
 	}
 
-	const toggleOrZoomOut = () => {
+	const resetZoom = () => {
 		const zz = document.querySelector('#zoomed-img')
 		if (zz && zz.style.transform && zz.style.transform.indexOf('scale(1)') === -1) {
 			for (let i = 0; i < 10; i++) {
 				zoom?.zoomOut()
 			}
-		} else {
+			return true
+		}
+		return false
+	}
+	const toggleOrZoomOut = () => {
+		const zz = document.querySelector('#zoomed-img')
+		if (!resetRoom) {
 			closeSingle()
 		}
 	}
@@ -91,102 +99,133 @@
 		await sendMsg({ event: 'toggle_orientation' })
 		await getPics()
 	}
+	$: orientation = w > h ? 'landscape' : 'portrait'
 </script>
 
-{#if single}
-	<div
-		use:shortcut={{ code: 'Space', callback: async () => closeSingle() }}
-		use:shortcut={{ code: 'KeyF', callback: () => closeSingle() }}
-		use:shortcut={{ code: 'KeyD', callback: () => closeSingle() }}
-		use:shortcut={{ code: 'KeyS', callback: () => closeSingle() }}
-		use:shortcut={{
-			code: 'KeyG',
-			callback: () => {
-				if (single === undefined) {
-					return
+<div class="app">
+	{#if single}
+		<div
+			class="container"
+			use:shortcut={{ code: 'Space', callback: async () => closeSingle() }}
+			use:shortcut={{ code: 'KeyF', callback: () => closeSingle() }}
+			use:shortcut={{ code: 'KeyD', callback: () => closeSingle() }}
+			use:shortcut={{ code: 'KeyS', callback: () => closeSingle() }}
+			use:shortcut={{
+				code: 'KeyG',
+				callback: () => {
+					if (single === undefined) {
+						return
+					}
+					setWinner(single)
+					nextSingle()
 				}
-				setWinner(single)
-				nextSingle()
-			}
-		}}
-		use:shortcut={{
-			code: 'KeyA',
-			callback: () => {
-				nextSingle()
-			}
-		}}
-		use:shortcut={{
-			code: 'KeyZ',
-			callback: () => {
-				prevSingle()
-			}
-		}}
-		use:shortcut={{
-			code: 'Digit6',
-			callback: async () => {
-				sendMsg({ event: 'hide', image: single?.path })
-				await getPics()
-			}
-		}}
-		use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}
-		on:click={toggleOrZoomOut}
-		aria-hidden="true"
-		on:swipe={swipeHandler}
-	>
-		<Zoom
-			src={single.link}
-			bind:this={zoom}
-			on:load={() => console.log('on Load')}
-			id="zoomed-img"
-		/>
-	</div>
-{:else if pics && pics.length > 0}
-	<button on:click={toggleOrientation}>
-		{#if $sameOrientation}
-			Orientation {$sameOrientation}
-		{:else}
-			No Orientation
-		{/if}
-	</button>
-	<div
-		class="container"
-		use:shortcut={{ code: 'Space', callback: async () => getPics() }}
-		use:shortcut={{ code: 'KeyR', callback: () => setWinner(pics[2]) }}
-		use:shortcut={{ code: 'KeyE', callback: () => setWinner(pics[1]) }}
-		use:shortcut={{ code: 'KeyW', callback: () => setWinner(pics[0]) }}
-		use:shortcut={{ code: 'KeyF', callback: () => (single = pics[2]) }}
-		use:shortcut={{ code: 'KeyD', callback: () => (single = pics[1]) }}
-		use:shortcut={{ code: 'KeyS', callback: () => (single = pics[0]) }}
-		use:shortcut={{ code: 'KeyA', callback: () => (single = pics[0]) }}
-	>
-		{#each pics as image}
-			<div class="img-fit">
-				<!--><button on:click={() => setWinner(image)}>win</button><-->
+			}}
+			use:shortcut={{
+				code: 'KeyA',
+				callback: () => {
+					nextSingle()
+				}
+			}}
+			use:shortcut={{
+				code: 'KeyZ',
+				callback: () => {
+					prevSingle()
+				}
+			}}
+			use:shortcut={{
+				code: 'Digit6',
+				callback: async () => {
+					sendMsg({ event: 'hide', image: single?.path })
+					await getPics()
+				}
+			}}
+			use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}
+			on:click={toggleOrZoomOut}
+			aria-hidden="true"
+			on:swipe={swipeHandler}
+		>
+			<Zoom
+				src={single.link}
+				bind:this={zoom}
+				on:load={() => console.log('on Load')}
+				id="zoomed-img"
+			/>
+		</div>
+	{:else if pics && pics.length > 0}
+		<div
+			class="container"
+			use:shortcut={{ code: 'Space', callback: async () => getPics() }}
+			use:shortcut={{ code: 'KeyR', callback: () => setWinner(pics[2]) }}
+			use:shortcut={{ code: 'KeyE', callback: () => setWinner(pics[1]) }}
+			use:shortcut={{ code: 'KeyW', callback: () => setWinner(pics[0]) }}
+			use:shortcut={{ code: 'KeyF', callback: () => (single = pics[2]) }}
+			use:shortcut={{ code: 'KeyD', callback: () => (single = pics[1]) }}
+			use:shortcut={{ code: 'KeyS', callback: () => (single = pics[0]) }}
+			use:shortcut={{ code: 'KeyA', callback: () => (single = pics[0]) }}
+		>
+			{#each pics as image}
+				<div class="img-fit">
+					<!--><button on:click={() => setWinner(image)}>win</button><-->
 
-				<img
-					src={image.link}
-					alt="some picture"
-					aria-hidden="true"
-					on:click={() => {
-						console.log('Image:', image)
-						single = image
-					}}
-				/>
-			</div>
-		{/each}
+					<img
+						src={image.link}
+						alt="some picture"
+						aria-hidden="true"
+						on:click={() => {
+							console.log('Image:', image)
+							single = image
+						}}
+					/>
+				</div>
+			{/each}
+		</div>
+	{:else}
+		<p>loading...</p>
+	{/if}
+	<div class="bottom-nav">
+		{#if single}
+			<button on:click|preventDefault={() => nextSingle()}>next</button>
+			<button on:click={() => prevSingle()}>prev</button>
+
+			<button on:click={() => setWinner(single)}>winner</button>
+      <button on:click={() => closeSingle()}>X</button>
+		{:else}
+			<button on:click={toggleOrientation}>
+				{#if $sameOrientation}
+					Orientation {$sameOrientation}
+				{:else}
+					No Orientation
+				{/if}
+			</button>
+			<span>{w}x{h} => {orientation}</span>
+		{/if}
 	</div>
-{:else}
-	<p>loading...</p>
-{/if}
+</div>
+<svelte:window bind:innerWidth={w} bind:innerHeight={h} />
 
 <style>
-	.container {
+	.app {
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
+		height: 100%;
+	}
+
+	.bottom-nav {
+		flex-shrink: 0;
+		z-index: 2;
+	}
+  .bottom-nav > button {
+  height: 45px;
+  margin-right: 20px;
+  }
+
+	.container {
+		flex: 1 0 auto;
+		display: flex;
 		flex-flow: row wrap;
-		align-items: center;
 		padding: 0;
 	}
+
 	.img-fit {
 		max-width: 33%;
 		max-height: 32%;
