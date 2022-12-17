@@ -188,7 +188,7 @@
 			<button on:click={() => prevSingle()}>prev</button>
 
 			<button on:click={() => setWinner(single)}>winner</button>
-      <button on:click={() => closeSingle()}>X</button>
+			<button on:click={() => closeSingle()}>X</button>
 		{:else}
 			<button on:click={toggleOrientation}>
 				{#if $sameOrientation}
@@ -205,19 +205,20 @@
 
 <style>
 	.app {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
+		display: grid;
+		grid-template-rows: 1fr auto;
+		min-height: 100%;
 	}
 
 	.bottom-nav {
-		flex-shrink: 0;
 		z-index: 2;
+		rid-row-start: 2;
+		grid-row-end: 3;
 	}
-  .bottom-nav > button {
-  height: 45px;
-  margin-right: 20px;
-  }
+	.bottom-nav > button {
+		height: 45px;
+		margin-right: 20px;
+	}
 
 	.container {
 		flex: 1 0 auto;
