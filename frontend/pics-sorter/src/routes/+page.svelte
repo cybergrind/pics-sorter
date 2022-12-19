@@ -136,7 +136,6 @@
 				code: 'Digit6',
 				callback: async () => {
 					sendMsg({ event: 'hide', image: single?.path })
-					await getPics()
 				}
 			}}
 			use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}

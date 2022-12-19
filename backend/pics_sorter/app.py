@@ -67,6 +67,7 @@ async def ws(sock: WebSocket):
             await sock.send_json({'event': 'rate_success'})
         elif event == 'hide':
             await controller.hide(msg['image'])
+            await sock.send_json({'event': 'hide_success'})
         elif event == 'toggle_orientation':
             controller.same_orientation = (controller.same_orientation + 1) % 3
 

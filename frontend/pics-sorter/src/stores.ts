@@ -32,6 +32,9 @@ export const addEvent = (event) => {
 	if (event.event === 'rate_success') {
 		getPics()
 	}
+  if (event.event === 'hide_success') {
+		getPics()
+	}
 }
 
 let _ws
