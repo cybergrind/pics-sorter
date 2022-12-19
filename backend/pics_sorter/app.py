@@ -70,6 +70,9 @@ async def ws(sock: WebSocket):
             await sock.send_json({'event': 'hide_success'})
         elif event == 'toggle_orientation':
             controller.same_orientation = (controller.same_orientation + 1) % 3
+        elif event == 'restore_last':
+            await controller.restore_last()
+            await sock.send_json({'event': 'restore_success'})
 
 
 async def close_session(controller: PicsController):

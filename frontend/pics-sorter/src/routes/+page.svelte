@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
-	import { picsStore, getPics, connectWS, setWinner, sendMsg, sameOrientation } from '../stores'
+	import { picsStore, getPics, connectWS, setWinner as setWinnerStore, sendMsg, sameOrientation } from '../stores'
 	import { shortcut } from '../hotkeys'
 	import { swipe, pinch } from 'svelte-gestures'
 	import Zoom from 'svelte-zoom'
@@ -29,6 +29,12 @@
 			single = pics[index]
 		}
 	})
+
+  const setWinner = (pic: Image) => {
+    index = 0
+    setWinnerStore(pic)
+    console.log('SetWinner: ', pic, index)
+  }
 
 	const nextSingle = () => {
 		if (single === undefined) {
@@ -122,7 +128,6 @@
 						return
 					}
 					setWinner(single)
-					nextSingle()
 				}
 			}}
 			use:shortcut={{
@@ -141,6 +146,12 @@
 				code: 'Digit6',
 				callback: async () => {
 					sendMsg({ event: 'hide', image: single?.path })
+				}
+			}}
+      use:shortcut={{
+				code: 'Digit5',
+				callback: async () => {
+					sendMsg({ event: 'restore_last' })
 				}
 			}}
 			on:click={toggleOrZoomOut}
@@ -166,6 +177,12 @@
 			use:shortcut={{ code: 'KeyD', callback: () => setSingle(pics[1]) }}
 			use:shortcut={{ code: 'KeyS', callback: () => setSingle(pics[0]) }}
 			use:shortcut={{ code: 'KeyA', callback: () => setSingle(pics[0]) }}
+      use:shortcut={{
+				code: 'Digit5',
+				callback: async () => {
+					sendMsg({ event: 'restore_last' })
+				}
+			}}
 		>
 			{#each pics as image}
 				<div class="img-fit">

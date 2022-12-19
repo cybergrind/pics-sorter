@@ -1,3 +1,4 @@
+import datetime
 import logging
 import random
 from hashlib import sha1
@@ -20,6 +21,7 @@ from .const import app_ctx
 log = logging.getLogger('controller')
 PICS_SUFFIX = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.jpg_large'}
 HIDDEN_DIR = '6_hidden'
+RESTORED_DIR = '5_restored'
 
 
 def image_get_size(image: Path) -> tuple[int, int, str, str]:
@@ -41,6 +43,8 @@ class PicsController:
         self.db: AsyncSession = self.session_maker()
         self.hidden_dir = self.path / HIDDEN_DIR
         self.hidden_dir.mkdir(exist_ok=True)
+        self.restored_dir = self.path / RESTORED_DIR
+        self.restored_dir.mkdir(exist_ok=True)
         self.same_orientation = 0
 
         random.shuffle(all_images)
@@ -148,9 +152,11 @@ class PicsController:
         winner_obj.elo_rating = rate(
             winner_obj.elo_rating, [(WIN, looser.elo_rating) for looser in loosers]
         )
+        winner_obj.updated_at = datetime.datetime.now()
 
         for obj, new_rating in updates:
             obj.elo_rating = new_rating
+            obj.updated_at = datetime.datetime.now()
         log.debug(f'{winner_before} => {winner_obj.elo_rating=}')
         await self.commit()
 
@@ -163,7 +169,20 @@ class PicsController:
             new_path = move(self.path / image.path, self.hidden_dir)
             image.path = str(new_path.relative_to(self.path))
             image.hidden = True
+            image.updated_at = datetime.datetime.now()
             await self.commit()
+
+    async def restore_last(self):
+        q = select(Image).filter_by(hidden=True).order_by(Image.updated_at.desc()).limit(1)
+        last = (await self.db.exec(q)).first()
+        if last:
+            old_path = last.path
+            new_path = move(self.path / last.path, self.hidden_dir)
+            last.path = str(new_path.relative_to(self.path))
+            last.hidden = False
+            last.updated_at = datetime.datetime.now()
+            await self.commit()
+            log.debug(f'Restored last: {old_path} => {new_path}')
 
     async def commit(self):
         await self.db.commit()

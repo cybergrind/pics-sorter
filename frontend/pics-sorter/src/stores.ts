@@ -22,6 +22,8 @@ const MAX_EVENTS = 10
 
 export const events = writable([])
 // add in front and limit to 10
+
+const GET_PICS_EVENTS = ['rate_success', 'hide_success', 'restore_success']
 export const addEvent = (event) => {
 	events.update((events) => {
 		events.unshift(event)
@@ -29,10 +31,7 @@ export const addEvent = (event) => {
 	})
 	console.log('Event: ', event)
 
-	if (event.event === 'rate_success') {
-		getPics()
-	}
-  if (event.event === 'hide_success') {
+	if (GET_PICS_EVENTS.includes(event.event)) {
 		getPics()
 	}
 }

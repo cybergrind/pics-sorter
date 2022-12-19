@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import AsyncGenerator
 
@@ -32,7 +33,12 @@ class Image(Base):
     width = db.Column(db.Integer, nullable=False)
     orientation = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
+    updated_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        server_onupdate=db.func.now(),
+        onupdate=datetime.datetime.now(),
+    )
     shown_times = db.Column(db.Integer, nullable=False, default=0, index=True)
     elo_rating = db.Column(db.Integer, nullable=False, default=1200, index=True)
     hidden = db.Column(db.Boolean, nullable=False, default=False, index=True)
