@@ -13,14 +13,19 @@
 	})
 
 	let w, h
-
-	let pics: Image[], single: Image | undefined, index: number | undefined
+	let pics: Image[]
+	let single: Image | undefined
+	let index: number | undefined
 	let zoom: Zoom | undefined
+
+	const setSingle = (pic: Image) => {
+		index = pics.indexOf(pic)
+		single = pics[index]
+	}
 
 	picsStore.subscribe((value: Image[]) => {
 		pics = value
 		if (single) {
-			index = 0
 			single = pics[index]
 		}
 	})
@@ -138,9 +143,9 @@
 					sendMsg({ event: 'hide', image: single?.path })
 				}
 			}}
-			use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}
 			on:click={toggleOrZoomOut}
 			aria-hidden="true"
+			use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}
 			on:swipe={swipeHandler}
 		>
 			<Zoom
@@ -157,10 +162,10 @@
 			use:shortcut={{ code: 'KeyR', callback: () => setWinner(pics[2]) }}
 			use:shortcut={{ code: 'KeyE', callback: () => setWinner(pics[1]) }}
 			use:shortcut={{ code: 'KeyW', callback: () => setWinner(pics[0]) }}
-			use:shortcut={{ code: 'KeyF', callback: () => (single = pics[2]) }}
-			use:shortcut={{ code: 'KeyD', callback: () => (single = pics[1]) }}
-			use:shortcut={{ code: 'KeyS', callback: () => (single = pics[0]) }}
-			use:shortcut={{ code: 'KeyA', callback: () => (single = pics[0]) }}
+			use:shortcut={{ code: 'KeyF', callback: () => setSingle(pics[2]) }}
+			use:shortcut={{ code: 'KeyD', callback: () => setSingle(pics[1]) }}
+			use:shortcut={{ code: 'KeyS', callback: () => setSingle(pics[0]) }}
+			use:shortcut={{ code: 'KeyA', callback: () => setSingle(pics[0]) }}
 		>
 			{#each pics as image}
 				<div class="img-fit">
