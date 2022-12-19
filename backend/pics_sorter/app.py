@@ -71,19 +71,17 @@ async def ws(sock: WebSocket):
             controller.same_orientation = (controller.same_orientation + 1) % 3
 
 
-async def close_session(db: AsyncSession):
-    await db.commit()
-    await db.close()
+async def close_session(controller: PicsController):
+    await controller.db.commit()
+    await controller.db.close()
 
 
 def get_app(app_config: AppConfig) -> FastAPI:
     db = setup_engine(app_config)
     from .models import async_session
 
-    session = async_session()
-    # session.begin()
-    controller = PicsController(app_config.pics_dir, session)
-    app = FastAPI(on_shutdown=[partial(close_session, session)], on_startup=[controller.setup])
+    controller = PicsController(app_config.pics_dir, async_session)
+    app = FastAPI(on_shutdown=[partial(close_session, controller)], on_startup=[controller.setup])
 
     app_ctx.set({'dir': app_config.pics_dir, 'controller': controller, 'app_config': app_config})
     app.controller = controller

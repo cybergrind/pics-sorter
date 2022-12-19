@@ -2,6 +2,7 @@ import logging
 import random
 from hashlib import sha1
 from pathlib import Path
+from typing import Callable
 
 import PIL.Image
 from elo import LOSS, rate, WIN
@@ -31,12 +32,13 @@ def image_get_size(image: Path) -> tuple[int, int, str, str]:
 
 
 class PicsController:
-    def __init__(self, path: Path, db: AsyncSession):
+    def __init__(self, path: Path, db: Callable[[], AsyncSession]):
+        self.session_maker = db
         self.path = path
         all_images = list(self.get_images())
         self.all_images = all_images
         log.info(f'{db=}')
-        self.db: AsyncSession = db
+        self.db: AsyncSession = self.session_maker()
         self.hidden_dir = self.path / HIDDEN_DIR
         self.hidden_dir.mkdir(exist_ok=True)
         self.same_orientation = 0
@@ -60,7 +62,6 @@ class PicsController:
                     else:
                         duplicate_exists = False
 
-
                     if duplicate_image and not duplicate_exists:
                         log.info(f'Moved image: {duplicate_image.path} => {rel_path}')
                         image = duplicate_image
@@ -74,7 +75,7 @@ class PicsController:
                             sha1_hash=sha1_hash,
                         )
                         self.db.add(image)
-                        self.db.commit()
+                        self.commit()
                         log.info(f'Hide duplicated: {rel_path=} vs {duplicate_image.path=}')
                         await self.hide(rel_path)
                     else:
@@ -89,8 +90,8 @@ class PicsController:
                 elif not image.sha1_hash:
                     width, height, orientation, sha1_hash = image_get_size(self.path / image.path)
                     image.sha1_hash = sha1_hash
-            await self.db.commit()
-        await self.db.commit()
+            await self.commit()
+        await self.commit()
 
     def get_images(self):
         for fpath in self.path.rglob('*'):
@@ -106,8 +107,9 @@ class PicsController:
                 order_by.append(Image.orientation.desc())
 
         q = select(Image).filter(~Image.hidden).order_by(*order_by).limit(num)
-        images = (await self.db.exec(q)).all()
-        return images
+        async with self.session_maker() as db:
+            images = (await db.exec(q)).all()
+            return images
 
     async def get_duplicated_images(self, num):
         q = (
@@ -150,7 +152,7 @@ class PicsController:
         for obj, new_rating in updates:
             obj.elo_rating = new_rating
         log.debug(f'{winner_before} => {winner_obj.elo_rating=}')
-        await self.db.commit()
+        await self.commit()
 
     async def hide(self, path: str):
         """
@@ -161,4 +163,8 @@ class PicsController:
             new_path = move(self.path / image.path, self.hidden_dir)
             image.path = str(new_path.relative_to(self.path))
             image.hidden = True
-            await self.db.commit()
+            await self.commit()
+
+    async def commit(self):
+        await self.db.commit()
+        self.db = self.session_maker()
