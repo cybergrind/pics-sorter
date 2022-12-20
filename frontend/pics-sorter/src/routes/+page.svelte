@@ -210,6 +210,7 @@
 
 			<button on:click={() => setWinner(single)}>winner</button>
 			<button on:click={() => closeSingle()}>X</button>
+      <span>{single.elo_rating}</span>
 		{:else}
 			<button on:click={toggleOrientation}>
 				{#if $sameOrientation}
@@ -219,6 +220,7 @@
 				{/if}
 			</button>
 			<span>{w}x{h} => {orientation}</span>
+      <span> {#each pics as image} |{image.elo_rating} {/each}</span>
 		{/if}
 	</div>
 </div>
