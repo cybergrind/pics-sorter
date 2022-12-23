@@ -20,6 +20,7 @@ from .const import app_ctx
 
 log = logging.getLogger('controller')
 PICS_SUFFIX = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.jpg_large'}
+TOP_10_DIR = '0_top10'
 HIDDEN_DIR = '6_hidden'
 RESTORED_DIR = '5_restored'
 
@@ -41,10 +42,6 @@ class PicsController:
         self.all_images = all_images
         log.info(f'{db=}')
         self.db: AsyncSession = self.session_maker()
-        self.hidden_dir = self.path / HIDDEN_DIR
-        self.hidden_dir.mkdir(exist_ok=True)
-        self.restored_dir = self.path / RESTORED_DIR
-        self.restored_dir.mkdir(exist_ok=True)
         self.same_orientation = 0
 
         random.shuffle(all_images)
@@ -79,7 +76,7 @@ class PicsController:
                             sha1_hash=sha1_hash,
                         )
                         self.db.add(image)
-                        self.commit()
+                        await self.commit()
                         log.info(f'Hide duplicated: {rel_path=} vs {duplicate_image.path=}')
                         await self.hide(rel_path)
                     else:
@@ -166,24 +163,44 @@ class PicsController:
         """
         log.debug(f'Hide: {path=} {app_ctx.get()=}')
         if image := (await self.db.exec(select(Image).filter_by(path=path))).first():
-            new_path = move(self.path / image.path, self.hidden_dir)
-            image.path = str(new_path.relative_to(self.path))
-            image.hidden = True
-            image.updated_at = datetime.datetime.now()
-            await self.commit()
+            await self.move(image, HIDDEN_DIR)
 
     async def restore_last(self):
         q = select(Image).filter_by(hidden=True).order_by(Image.updated_at.desc()).limit(1)
         last = (await self.db.exec(q)).first()
         if last:
-            old_path = last.path
-            new_path = move(self.path / last.path, self.hidden_dir)
-            last.path = str(new_path.relative_to(self.path))
-            last.hidden = False
-            last.updated_at = datetime.datetime.now()
-            await self.commit()
-            log.debug(f'Restored last: {old_path} => {new_path}')
+            log.debug(f'Restore: {last.path}')
+            await self.move(last, RESTORED_DIR)
+
+    async def move(self, img: Image, dst: str | Path):
+        if isinstance(dst, str):
+            dst = self.path / dst
+            dst.mkdir(exist_ok=True, parents=True)
+        else:
+            assert dst.is_relative_to(self.path)
+        if (dst / img.path) == self.path / img.path:
+            log.debug('Already in target dir')
+            return
+
+        old_path = img.path
+        new_path = move(self.path / img.path, dst)
+        img.path = str(new_path.relative_to(self.path))
+        img.hidden = False
+        img.updated_at = datetime.datetime.now()
+        self.db.add(img)
+        await self.commit()
+        log.debug(f'Moved: {old_path} => {new_path}')
 
     async def commit(self):
         await self.db.commit()
         self.db = self.session_maker()
+
+    async def build_top10(self):
+        top10_new = await Image.get_top_n_query(self.db, n=10)
+        top10_curr = await Image.get_in_dir(self.db, TOP_10_DIR)
+
+        for img in top10_new:
+            if img in top10_curr:
+                continue
+            log.debug(f'Move: {img}')
+            await self.move(img, TOP_10_DIR)

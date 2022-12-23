@@ -221,6 +221,7 @@
 			</button>
 			<span>{w}x{h} => {orientation}</span>
       <span> {#each pics as image} |{image.elo_rating} {/each}</span>
+      <button on:click={() => sendMsg({event: 'build_top10'})}>Build Top10</button>
 		{/if}
 	</div>
 </div>

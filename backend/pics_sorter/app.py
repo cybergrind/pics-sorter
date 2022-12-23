@@ -74,6 +74,8 @@ async def ws(sock: WebSocket):
         elif event == 'restore_last':
             await controller.restore_last()
             await sock.send_json({'event': 'restore_success'})
+        elif event == 'build_top10':
+            await controller.build_top10()
 
 
 async def close_session(controller: PicsController):
