@@ -21,6 +21,7 @@ from .const import app_ctx
 log = logging.getLogger('controller')
 PICS_SUFFIX = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.jpg_large'}
 TOP_10_DIR = '0_top10'
+OTHER_DIR = '1_other'
 HIDDEN_DIR = '6_hidden'
 RESTORED_DIR = '5_restored'
 
@@ -163,6 +164,7 @@ class PicsController:
         """
         log.debug(f'Hide: {path=} {app_ctx.get()=}')
         if image := (await self.db.exec(select(Image).filter_by(path=path))).first():
+            image.hidden = True
             await self.move(image, HIDDEN_DIR)
 
     async def restore_last(self):
@@ -170,6 +172,7 @@ class PicsController:
         last = (await self.db.exec(q)).first()
         if last:
             log.debug(f'Restore: {last.path}')
+            last.hidden = False
             await self.move(last, RESTORED_DIR)
 
     async def move(self, img: Image, dst: str | Path):
@@ -185,7 +188,6 @@ class PicsController:
         old_path = img.path
         new_path = move(self.path / img.path, dst)
         img.path = str(new_path.relative_to(self.path))
-        img.hidden = False
         img.updated_at = datetime.datetime.now()
         self.db.add(img)
         await self.commit()
@@ -204,3 +206,7 @@ class PicsController:
                 continue
             log.debug(f'Move: {img}')
             await self.move(img, TOP_10_DIR)
+        for img in top10_curr:
+            if img in top10_new:
+                continue
+            await self.move(img, OTHER_DIR)
