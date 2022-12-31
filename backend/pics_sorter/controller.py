@@ -24,6 +24,9 @@ TOP_10_DIR = '0_top10'
 OTHER_DIR = '1_other'
 HIDDEN_DIR = '6_hidden'
 RESTORED_DIR = '5_restored'
+GOOD = '1_good'
+BAD = '2_bad'
+SORT = 'sort'
 
 
 def image_get_size(image: Path) -> tuple[int, int, str, str]:
@@ -147,16 +150,23 @@ class PicsController:
         for looser in loosers:
             updates.append([looser, rate(looser.elo_rating, [(LOSS, winner_obj.elo_rating)])])
         winner_before = winner_obj.elo_rating
-        winner_obj.elo_rating = rate(
-            winner_obj.elo_rating, [(WIN, looser.elo_rating) for looser in loosers]
-        )
-        winner_obj.updated_at = datetime.datetime.now()
 
+        new_rating = rate(winner_obj.elo_rating, [(WIN, looser.elo_rating) for looser in loosers])
+        await self.new_elo(winner_obj, new_rating)
         for obj, new_rating in updates:
-            obj.elo_rating = new_rating
-            obj.updated_at = datetime.datetime.now()
+            await self.new_elo(obj, new_rating)
         log.debug(f'{winner_before} => {winner_obj.elo_rating=}')
         await self.commit()
+
+    async def new_elo(self, img, new_rating):
+        img.elo_rating = new_rating
+        if img.elo_rating > 1200:
+            if not img.path.startswith((TOP_10_DIR, GOOD)):
+                await self.move(img, GOOD)
+        elif img.elo_rating < 1150:
+            if not img.path.startswith(BAD):
+                await self.move(img, BAD)
+        img.updated_at = datetime.datetime.now()
 
     async def hide(self, path: str):
         """
@@ -198,7 +208,7 @@ class PicsController:
         self.db = self.session_maker()
 
     async def build_top10(self):
-        top10_new = await Image.get_top_n_query(self.db, n=10)
+        top10_new = await Image.get_top_n_query(self.db, n=15)
         top10_curr = await Image.get_in_dir(self.db, TOP_10_DIR)
 
         for img in top10_new:
