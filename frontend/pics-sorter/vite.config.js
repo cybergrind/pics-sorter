@@ -12,10 +12,10 @@ const config = {
   server: {
     host: '0.0.0.0',
     proxy: {
-      '/api': 'http://[::1]:8000',
-      '/pics': 'http://[::1]:8000',
+      '/api': 'http://[::1]:8113',
+      '/pics': 'http://[::1]:8113',
       '/ws': {
-        target: 'ws://[::1]:8000',
+        target: 'ws://[::1]:8113',
         ws: true
       }
     }

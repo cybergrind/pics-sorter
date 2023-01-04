@@ -28,8 +28,8 @@ def uvicorn_main():
     uvicorn.run(
         'pics_sorter.__main__:main',
         factory=True,
-        host='0.0.0.0',
-        port=8006,
+        host='::1',
+        port=8113,
         reload_dirs=['backend'],
         reload=True,
     )
