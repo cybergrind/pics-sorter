@@ -25,7 +25,8 @@ OTHER_DIR = '1_other'
 HIDDEN_DIR = '6_hidden'
 RESTORED_DIR = '5_restored'
 GOOD = '1_good'
-BAD = '2_bad'
+BAD = '9_bad'
+LOWER = '3_lower'
 SORT = 'sort'
 
 
@@ -166,6 +167,9 @@ class PicsController:
         elif img.elo_rating < 1150:
             if not img.path.startswith(BAD):
                 await self.move(img, BAD)
+        elif img.elo_rating < 1200:
+            if not img.path.startswith(LOWER):
+                await self.move(img, LOWER)
         img.updated_at = datetime.datetime.now()
 
     async def hide(self, path: str):

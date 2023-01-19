@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 
 from elo import DRAW, LOSS, rate, WIN
-from fastapi import APIRouter, FastAPI, Request, WebSocket
+from fastapi import APIRouter, FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pics_sorter.const import AppConfig
@@ -31,8 +31,15 @@ def to_link(url_for, rel_image):
 async def get_links(req: Request, num=10):
     controller: PicsController = app_ctx.get()['controller']
     images = await controller.get_relative_images(num)
-    return [{'link': to_link(req.app.url_path_for, x.path), 'path': x.path,
-             'id': x.id, 'elo_rating': x.elo_rating} for x in images]
+    return [
+        {
+            'link': to_link(req.app.url_path_for, x.path),
+            'path': x.path,
+            'id': x.id,
+            'elo_rating': x.elo_rating,
+        }
+        for x in images
+    ]
 
 
 @root.get('/')
@@ -60,22 +67,25 @@ async def ws(sock: WebSocket):
     await sock.send_json({'type': 'echo'})
     controller: PicsController = app_ctx.get()['controller']
 
-    while True:
-        msg = await sock.receive_json()
-        event = msg.get('event')
-        if event == 'rate':
-            await controller.rate(msg['winner'], msg['loosers'])
-            await sock.send_json({'event': 'rate_success'})
-        elif event == 'hide':
-            await controller.hide(msg['image'])
-            await sock.send_json({'event': 'hide_success'})
-        elif event == 'toggle_orientation':
-            controller.same_orientation = (controller.same_orientation + 1) % 3
-        elif event == 'restore_last':
-            await controller.restore_last()
-            await sock.send_json({'event': 'restore_success'})
-        elif event == 'build_top10':
-            await controller.build_top10()
+    try:
+        while True:
+            msg = await sock.receive_json()
+            event = msg.get('event')
+            if event == 'rate':
+                await controller.rate(msg['winner'], msg['loosers'])
+                await sock.send_json({'event': 'rate_success'})
+            elif event == 'hide':
+                await controller.hide(msg['image'])
+                await sock.send_json({'event': 'hide_success'})
+            elif event == 'toggle_orientation':
+                controller.same_orientation = (controller.same_orientation + 1) % 3
+            elif event == 'restore_last':
+                await controller.restore_last()
+                await sock.send_json({'event': 'restore_success'})
+            elif event == 'build_top10':
+                await controller.build_top10()
+    except WebSocketDisconnect:
+        pass
 
 
 async def close_session(controller: PicsController):
