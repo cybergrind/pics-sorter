@@ -134,7 +134,8 @@ class PicsController:
                 diff = text(f'abs(elo_rating - {pivot.elo_rating})')
                 q = (
                     select(Image)
-                    .filter(Image.extra_count == 0)
+                    .filter(Image.extra_count == 0,
+                            ~Image.hidden)
                     .order_by(*[diff, Image.shown_times.asc(), Image.elo_rating.desc()])
                     .limit(num - 1)
                 )
