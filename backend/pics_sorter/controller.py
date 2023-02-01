@@ -184,9 +184,11 @@ class PicsController:
             if image.extra_count > 0 and image.path == winner:
                 image.extra_count -= 1
             elif image.extra_count > 0 and not multi_extra_count:
-                # if looser has extra count = we found it's place in current iteration
+                # variant 1: image with extra_count found it's elo place
+                # variant 2: image must be shown on the next iteration
                 image.extra_count = 0
-                image.shown_times += 1
+                if image.path != winner:
+                    continue
             else:
                 image.shown_times += 1
 
@@ -196,6 +198,8 @@ class PicsController:
                 loosers.append(image)
         updates = []
         for looser in loosers:
+            if looser.extra_count > 0 and multi_extra_count:
+                continue
             updates.append([looser, rate(looser.elo_rating, [(LOSS, winner_obj.elo_rating)])])
         winner_before = winner_obj.elo_rating
 
