@@ -100,16 +100,25 @@
 		}
 		return false
 	}
+
 	const toggleOrZoomOut = () => {
 		const zz = document.querySelector('#zoomed-img')
 		if (!resetRoom) {
 			closeSingle()
 		}
 	}
+
 	const toggleOrientation = async () => {
 		await sendMsg({ event: 'toggle_orientation' })
 		await getPics()
 	}
+
+  const addExtraCount = async () => {
+    const extra_count = single.extra_count > 0 ? 1 : 2
+    await sendMsg({ event: 'add_extra_count', 'image': single.path, 'count': extra_count})
+    single.extra_count += extra_count
+  }
+
 	$: orientation = w > h ? 'landscape' : 'portrait'
 </script>
 
@@ -121,6 +130,7 @@
 			use:shortcut={{ code: 'KeyF', callback: () => closeSingle() }}
 			use:shortcut={{ code: 'KeyD', callback: () => closeSingle() }}
 			use:shortcut={{ code: 'KeyS', callback: () => closeSingle() }}
+      use:shortcut={{ code: 'KeyB', callback: () => addExtraCount() }}
 			use:shortcut={{
 				code: 'KeyG',
 				callback: () => {
@@ -209,8 +219,9 @@
 			<button on:click={() => prevSingle()}>prev</button>
 
 			<button on:click={() => setWinner(single)}>winner</button>
+      <button on:click={() => addExtraCount(single)}>++</button>
 			<button on:click={() => closeSingle()}>X</button>
-      <span>{single.elo_rating}</span>
+      <span>{single.elo_rating}/{single.extra_count}</span>
 		{:else}
 			<button on:click={toggleOrientation}>
 				{#if $sameOrientation}
@@ -220,7 +231,7 @@
 				{/if}
 			</button>
 			<span>{w}x{h} => {orientation}</span>
-      <span> {#each pics as image} |{image.elo_rating} {/each}</span>
+      <span> {#each pics as image} |{image.elo_rating}/{image.extra_count} {/each}</span>
       <button on:click={() => sendMsg({event: 'build_top10'})}>Build Top10</button>
 		{/if}
 	</div>

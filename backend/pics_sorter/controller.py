@@ -9,7 +9,7 @@ import PIL.Image
 from elo import LOSS, rate, WIN
 from pics_sorter.models import Image
 from pics_sorter.utils import move
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -59,7 +59,10 @@ class PicsController:
                 q = select(Image).filter_by(path=rel_path)
                 image = (await self.db.exec(q)).first()
                 if image is None:
-                    width, height, orientation, sha1_hash = image_get_size(self.path / rel_path)
+                    try:
+                        width, height, orientation, sha1_hash = image_get_size(self.path / rel_path)
+                    except PIL.UnidentifiedImageError:
+                        continue
 
                     q = select(Image).filter_by(sha1_hash=sha1_hash)
                     duplicate_image = (await self.db.exec(q)).first()
@@ -104,16 +107,50 @@ class PicsController:
             if fpath.is_file() and fpath.suffix.lower() in PICS_SUFFIX:
                 yield fpath
 
-    async def get_relative_images(self, num):
-        order_by = [Image.shown_times.asc(), Image.elo_rating.asc()]
-        if self.same_orientation:
-            if self.same_orientation == 1:
-                order_by.append(Image.orientation.asc())
-            else:
-                order_by.append(Image.orientation.desc())
+    async def image_add_extra_count(self, img_path: str, count=1):
+        image = await Image.get_by_path(self.db, img_path)
+        if not image:
+            raise NotImplementedError
+        image.extra_count += count
+        await self.commit()
 
-        q = select(Image).filter(~Image.hidden).order_by(*order_by).limit(num)
+    async def get_relative_images(self, num):
+        """
+        if have extra_count = select 1 image
+        and select rest with similar elo score and lowest_count
+        """
         async with self.session_maker() as db:
+            q = (
+                select(Image)
+                .filter(Image.extra_count > 0)
+                .order_by(Image.extra_count.desc(), Image.shown_times.asc())
+                .limit(1)
+            )
+            pivot = (await db.exec(q)).all()
+
+            if pivot:
+                # calculate elo absocult difference and order by it
+                pivot = pivot[0]
+                diff = text(f'abs(elo_rating - {pivot.elo_rating})')
+                q = (
+                    select(Image)
+                    .filter(Image.extra_count == 0)
+                    .order_by(*[diff, Image.shown_times.asc(), Image.elo_rating.desc()])
+                    .limit(num - 1)
+                )
+                images = (await db.exec(q)).all()
+                images.append(pivot)
+                return images
+
+            order_by = [Image.shown_times.asc(), Image.elo_rating.asc()]
+            if self.same_orientation:
+                if self.same_orientation == 1:
+                    order_by.append(Image.orientation.asc())
+                else:
+                    order_by.append(Image.orientation.desc())
+
+            q = select(Image).filter(~Image.hidden).order_by(*order_by).limit(num)
+
             images = (await db.exec(q)).all()
             return images
 
@@ -141,8 +178,18 @@ class PicsController:
         images = (await self.db.exec(q)).all()
         loosers = []
         winner_obj = None
+        multi_extra_count = len(list(filter(lambda x: x.extra_count > 0, images))) > 1
+
         for image in images:
-            image.shown_times += 1
+            if image.extra_count > 0 and image.path == winner:
+                image.extra_count -= 1
+            elif image.extra_count > 0 and not multi_extra_count:
+                # if looser has extra count = we found it's place in current iteration
+                image.extra_count = 0
+                image.shown_times += 1
+            else:
+                image.shown_times += 1
+
             if image.path == winner:
                 winner_obj = image
             else:

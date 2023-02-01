@@ -37,6 +37,7 @@ async def get_links(req: Request, num=10):
             'path': x.path,
             'id': x.id,
             'elo_rating': x.elo_rating,
+            'extra_count': x.extra_count,
         }
         for x in images
     ]
@@ -84,6 +85,8 @@ async def ws(sock: WebSocket):
                 await sock.send_json({'event': 'restore_success'})
             elif event == 'build_top10':
                 await controller.build_top10()
+            elif event == 'add_extra_count':
+                await controller.image_add_extra_count(msg['image'], msg.get('count', 1))
     except WebSocketDisconnect:
         pass
 

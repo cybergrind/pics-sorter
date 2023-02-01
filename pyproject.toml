@@ -17,6 +17,8 @@ exclude = '''
   | dist
 )/
 '''
+[tool.ruff]
+line-length = 100
 
 [tool.isort]
 combine_as_imports = true

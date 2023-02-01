@@ -44,6 +44,7 @@ class Image(Base):
     shown_times = db.Column(db.Integer, nullable=False, default=0, index=True)
     elo_rating = db.Column(db.Integer, nullable=False, default=1200, index=True)
     hidden = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    extra_count = db.Column(db.Integer, nullable=False, default=0, server_default='0', index=True)
     sha1_hash = db.Column(db.String(40), nullable=True, index=True)
 
     @classmethod
@@ -62,6 +63,10 @@ class Image(Base):
     @classmethod
     async def get_in_dir(cls, session: AsyncSession, path: str):
         return (await session.exec(select(Image).where(Image.path.startswith(path)))).all()
+
+    @classmethod
+    async def get_by_path(cls, session: AsyncSession, path: str) -> 'Image':
+        return (await session.exec(select(Image).where(Image.path == path))).first()
 
 
 def get_connection_string(config: AppConfig, is_async=True):
