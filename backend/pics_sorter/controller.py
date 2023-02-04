@@ -114,6 +114,23 @@ class PicsController:
         image.extra_count += count
         await self.commit()
 
+    async def get_images_around_pivot(self, db, pivot, num=2):
+        diff = text(f'abs(elo_rating - {pivot.elo_rating})')
+        order_by = [diff, Image.shown_times.asc(), Image.elo_rating.desc()]
+        if self.same_orientation:
+            if self.same_orientation == 1:
+                order_by.append(Image.orientation.asc())
+            else:
+                order_by.append(Image.orientation.desc())
+        q = (
+            select(Image)
+            .filter(Image.extra_count == 0, ~Image.hidden, Image.path != pivot.path)
+            .order_by(*order_by)
+            .limit(num)
+        )
+        images = (await db.exec(q)).all()
+        return images
+
     async def get_relative_images(self, num):
         """
         if have extra_count = select 1 image
@@ -129,30 +146,24 @@ class PicsController:
             pivot = (await db.exec(q)).all()
 
             if pivot:
-                # calculate elo absocult difference and order by it
                 pivot = pivot[0]
-                diff = text(f'abs(elo_rating - {pivot.elo_rating})')
+            else:
+                # select images with lowest shown_times
+                order_by = [Image.shown_times.asc(), Image.elo_rating.desc()]
+                if self.same_orientation:
+                    if self.same_orientation == 1:
+                        order_by.append(Image.orientation.asc())
+                    else:
+                        order_by.append(Image.orientation.desc())
                 q = (
                     select(Image)
-                    .filter(Image.extra_count == 0,
-                            ~Image.hidden)
-                    .order_by(*[diff, Image.shown_times.asc(), Image.elo_rating.desc()])
-                    .limit(num - 1)
+                    .filter(Image.extra_count == 0, ~Image.hidden)
+                    .order_by(*order_by)
+                    .limit(1)
                 )
-                images = (await db.exec(q)).all()
-                images.append(pivot)
-                return images
-
-            order_by = [Image.shown_times.asc(), Image.elo_rating.asc()]
-            if self.same_orientation:
-                if self.same_orientation == 1:
-                    order_by.append(Image.orientation.asc())
-                else:
-                    order_by.append(Image.orientation.desc())
-
-            q = select(Image).filter(~Image.hidden).order_by(*order_by).limit(num)
-
-            images = (await db.exec(q)).all()
+                pivot = (await db.exec(q)).all()[0]
+            images = await self.get_images_around_pivot(db, pivot)
+            images.append(pivot)
             return images
 
     async def get_duplicated_images(self, num):
