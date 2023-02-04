@@ -23,7 +23,7 @@ const MAX_EVENTS = 10
 export const events = writable([])
 // add in front and limit to 10
 
-const GET_PICS_EVENTS = ['rate_success', 'hide_success', 'restore_success', 'add_extra_count_success']
+const GET_PICS_EVENTS = ['rate_success', 'hide_success', 'restore_success']
 export const addEvent = (event) => {
 	events.update((events) => {
 		events.unshift(event)
