@@ -233,6 +233,7 @@
 			<span>{w}x{h} => {orientation}</span>
       <span> {#each pics as image} |{image.elo_rating}/{image.extra_count} {/each}</span>
       <button on:click={() => sendMsg({event: 'build_top10'})}>Build Top10</button>
+      <button on:click={() => sendMsg({event: 'touch_restart'})}>Reindex</button>
 		{/if}
 	</div>
 </div>

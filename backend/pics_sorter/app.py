@@ -88,6 +88,9 @@ async def ws(sock: WebSocket):
             elif event == 'add_extra_count':
                 await controller.image_add_extra_count(msg['image'], msg.get('count', 1))
                 await sock.send_json({'event': 'add_extra_count_success'})
+            elif event == 'touch_restart':
+                # touch app.py == __file__
+                Path(__file__).touch()
     except WebSocketDisconnect:
         pass
 
