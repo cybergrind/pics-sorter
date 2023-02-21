@@ -11,7 +11,7 @@ indent_size = 4
 emacs_py_project = backend
 emacs_py_env = venv
 
-[frontend/**.{js,jsx,ts,svelte}]
+[frontend/**/*.{js,jsx,ts,svelte}]
 indent_style = space
 indent_size = 2
 

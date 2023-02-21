@@ -48,12 +48,12 @@ export const connectWS = () => {
   })
 }
 
-export const setWinner = (winner:Image) => {
+export const setWinner = (winner: Image) => {
   const loosersObjs = _pics.filter((pic) => pic.path !== winner.path)
   const loosers = loosersObjs.map((v) => v.path)
   _ws.send(JSON.stringify({ event: 'rate', winner: winner.path, loosers }))
 }
 
-export const sendMsg = (msg:{event: string}) => {
+export const sendMsg = (msg: { event: string }) => {
   _ws.send(JSON.stringify(msg))
 }

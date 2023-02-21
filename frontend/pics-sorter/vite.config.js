@@ -1,14 +1,14 @@
-import { sveltekit } from '@sveltejs/kit/vite';
+import { sveltekit } from '@sveltejs/kit/vite'
 
 /** @type {import('vite').UserConfig} */
 const config = {
-	plugins: [sveltekit()],
-	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
-	},
-//  build: {
-//    emptyOutDir: false,
-//  },
+  plugins: [sveltekit()],
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}']
+  },
+  //  build: {
+  //    emptyOutDir: false,
+  //  },
   server: {
     host: '0.0.0.0',
     proxy: {
@@ -20,6 +20,6 @@ const config = {
       }
     }
   }
-};
+}
 
-export default config;
+export default config
