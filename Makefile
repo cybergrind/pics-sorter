@@ -1,5 +1,6 @@
 PICS_DIR ?=
 MESSAGE ?=
+PORT ?= 8113
 
 backend/requirements.txt: backend/requirements.in
 	pip-compile -o backend/requirements.txt backend/requirements.in
@@ -12,11 +13,10 @@ venv: backend/requirements.txt
 .PHONY: run
 
 run: venv frontend/pics-sorter/build/index.html
-	uvicorn --host=0.0.0.0 --port=8113 --reload --reload-dir backend/pics_sorter --factory 'pics_sorter.__main__:main'
+	uvicorn --host=0.0.0.0 --port=${PORT} --reload --reload-dir backend/pics_sorter --factory 'pics_sorter.__main__:main'
 
 run_python:
 	python3 -m pics_sorter $(PICS_DIR)
-
 
 build-front: frontend/pics-sorter/build/index.html
 
@@ -24,6 +24,8 @@ build-front: frontend/pics-sorter/build/index.html
 frontend/pics-sorter/build/index.html: frontend/pics-sorter/src/**/*
 	cd frontend/pics-sorter && pnpm run build
 
+dev:
+	cd frontend/pics-sorter && pnpm run dev
 
 generate-migration:
 	@if [ -z "$(MESSAGE)" ]; then echo "MESSAGE is not defined"; exit 1; fi
