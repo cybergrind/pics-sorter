@@ -45,6 +45,7 @@ class PicsController:
         self.path = path
         all_images = list(self.get_images())
         self.all_images = all_images
+        self.all_images_dict = {str(image.relative_to(self.path)): image for image in all_images}
         log.info(f'{db=}')
         self.db: AsyncSession = self.session_maker()
         self.same_orientation = 0
@@ -99,7 +100,19 @@ class PicsController:
                 elif not image.sha1_hash:
                     width, height, orientation, sha1_hash = image_get_size(self.path / image.path)
                     image.sha1_hash = sha1_hash
+
             await self.commit()
+        last_id = 0
+        while True:
+            q = select(Image).filter(Image.id >= last_id).order_by(Image.id).limit(300)
+            images = (await self.db.exec(q)).all()
+            for image in images:
+                if image.path not in self.all_images_dict:
+                    log.info(f'Delete image: {image.path}')
+                    await self.db.delete(image)
+            if not images:
+                break
+            last_id += 300
         await self.commit()
 
     def get_images(self):
