@@ -99,7 +99,7 @@
 
   const toggleOrZoomOut = () => {
     const zz = document.querySelector('#zoomed-img')
-    if (!resetRoom) {
+    if (!zz) {
       closeSingle()
     }
   }
