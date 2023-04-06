@@ -3,7 +3,8 @@
   import { picsStore, getPics, connectWS, setWinner as setWinnerStore, sendMsg, sameOrientation } from '../stores'
   import { shortcut } from '../hotkeys'
   import { swipe, pinch } from 'svelte-gestures'
-  import Zoom from 'svelte-zoom'
+  //import Zoom from 'svelte-zoom'
+  import Zoom from '../lib/zoom/index.svelte'
 
   import type { Image } from '../types'
 
@@ -18,8 +19,6 @@
   let index: number | undefined
   let zoom: Zoom | undefined
   let navOnBottom = true
-
-  $: navClass = 'page-nav page-nav-' + (navOnBottom ? 'bottom' : 'top')
 
   const setSingle = (pic: Image) => {
     index = pics.indexOf(pic)
@@ -40,6 +39,7 @@
   }
 
   const nextSingle = () => {
+    resetZoom()
     if (single === undefined) {
       single = pics[0]
     }
@@ -51,6 +51,7 @@
   }
 
   const prevSingle = () => {
+    resetZoom()
     if (single === undefined) {
       single = pics[pics.length - 1]
     }
@@ -221,6 +222,8 @@
       <button on:click={() => addExtraCount(single)}>++</button>
       <button on:click={() => closeSingle()}>X</button>
       <span>{single.elo_rating}/{single.extra_count}</span>
+      <button on:click={() => resetZoom()}>RST</button>
+      <button on:click={() => navOnBottom = !navOnBottom}>MM</button>
     {:else}
       <button on:click={toggleOrientation}>
         {#if $sameOrientation}
