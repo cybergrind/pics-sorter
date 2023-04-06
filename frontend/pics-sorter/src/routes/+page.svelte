@@ -17,6 +17,9 @@
   let single: Image | undefined
   let index: number | undefined
   let zoom: Zoom | undefined
+  let navOnBottom = true
+
+  $: navClass = 'page-nav page-nav-' + (navOnBottom ? 'bottom' : 'top')
 
   const setSingle = (pic: Image) => {
     index = pics.indexOf(pic)
@@ -209,7 +212,7 @@
   {:else}
     <p>loading...</p>
   {/if}
-  <div class="bottom-nav">
+  <div class={navClass}>
     {#if single}
       <button on:click|preventDefault={() => nextSingle()}>next</button>
       <button on:click={() => prevSingle()}>prev</button>
@@ -230,6 +233,7 @@
       <span> {#each pics as image} |{image.elo_rating}/{image.extra_count} {/each}</span>
       <button on:click={() => sendMsg({event: 'build_top10'})}>Build Top10</button>
       <button on:click={() => sendMsg({event: 'touch_restart'})}>Reindex</button>
+      <button on:click={() => navOnBottom = !navOnBottom}>Move nav</button>
     {/if}
   </div>
 </div>
@@ -242,14 +246,18 @@
     min-height: 100%;
   }
 
-  .bottom-nav {
-    z-index: 2;
-    rid-row-start: 2;
-    grid-row-end: 3;
+  .page-nav {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    z-index: 999;
   }
-  .bottom-nav > button {
-    height: 45px;
-    margin-right: 20px;
+  .page-nav-bottom {
+    bottom: 0;
+  }
+  .page-nav > button {
+    height: 3.5vh;
+    margin-right: 10px;
   }
 
   .container {
