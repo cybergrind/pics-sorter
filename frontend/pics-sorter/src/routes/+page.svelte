@@ -20,6 +20,8 @@
   let zoom: Zoom | undefined
   let navOnBottom = true
 
+  $: navClass = 'page-nav page-nav-' + (navOnBottom ? 'bottom' : 'top')
+
   const setSingle = (pic: Image) => {
     index = pics.indexOf(pic)
     single = pics[index]
