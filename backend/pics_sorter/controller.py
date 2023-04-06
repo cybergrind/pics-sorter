@@ -144,7 +144,7 @@ class PicsController:
         images = (await db.exec(q)).all()
         return images
 
-    async def get_relative_images(self, num):
+    async def get_relative_images(self, num) -> list[Image]:
         """
         if have extra_count = select 1 image
         and select rest with similar elo score and lowest_count

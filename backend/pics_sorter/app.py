@@ -38,6 +38,8 @@ async def get_links(req: Request, num=10):
             'id': x.id,
             'elo_rating': x.elo_rating,
             'extra_count': x.extra_count,
+            'height': x.height,
+            'width': x.width,
         }
         for x in images
     ]
