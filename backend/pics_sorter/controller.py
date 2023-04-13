@@ -9,6 +9,7 @@ import PIL.Image
 from elo import LOSS, rate, WIN
 from pics_sorter.models import Image
 from pics_sorter.utils import move
+import pydantic
 from sqlalchemy import func, text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -39,6 +40,11 @@ def image_get_size(image: Path) -> tuple[int, int, str, str]:
     return width, height, orientation, sha1_sum
 
 
+
+class Settings(pydantic.BaseModel):
+    same_orientation: int = 0
+    nav: bool = True
+
 class PicsController:
     def __init__(self, path: Path, db: Callable[[], AsyncSession]):
         self.session_maker = db
@@ -49,6 +55,7 @@ class PicsController:
         log.info(f'{db=}')
         self.db: AsyncSession = self.session_maker()
         self.same_orientation = 0
+        self.settings = Settings()
 
         random.shuffle(all_images)
         self.iterator = iter(all_images)

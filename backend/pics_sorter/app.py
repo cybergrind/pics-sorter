@@ -54,7 +54,12 @@ async def index():
 async def pics(req: Request):
     controller: PicsController = app_ctx.get()['controller']
     images = await get_links(req, num=3)
-    return {'success': True, 'images': images, 'same_orientation': controller.same_orientation}
+    return {
+        'success': True,
+        'images': images,
+        'same_orientation': controller.same_orientation,
+        'settings': controller.settings,
+    }
 
 
 @root.get('/html')
@@ -80,8 +85,15 @@ async def ws(sock: WebSocket):
             elif event == 'hide':
                 await controller.hide(msg['image'])
                 await sock.send_json({'event': 'hide_success'})
+            elif event == 'toggle_setting':
+                settings = controller.settings
+                current_value = getattr(settings, msg['name'])
+                setattr(settings, msg['name'], not current_value)
+                await sock.send_json({'event': 'update_settings', 'settings': settings.dict()})
             elif event == 'toggle_orientation':
+                settings = controller.settings
                 controller.same_orientation = (controller.same_orientation + 1) % 3
+                settings.same_orientation = (settings.same_orientation + 1) % 3
             elif event == 'restore_last':
                 await controller.restore_last()
                 await sock.send_json({'event': 'restore_success'})

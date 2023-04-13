@@ -4,18 +4,19 @@ import ReconnectingWebSocket from 'reconnecting-websocket'
 import type { Image } from './types'
 
 export const picsStore: Writable<Image[]> = writable([])
-export const sameOrientation = writable(0)
 
 let _pics: Image[]
 picsStore.subscribe((value) => {
   _pics = value
 })
 
+export const settings: Writable<Record<string, any>> = writable({})
+
 export async function getPics() {
   const response = await axios.get(`${window.location.origin}/api/pics/`)
   console.log(response.data)
   picsStore.set(response.data.images)
-  sameOrientation.set(response.data.same_orientation)
+  settings.set(response.data.settings)
 }
 
 const MAX_EVENTS = 10
@@ -34,9 +35,16 @@ export const addEvent = (event) => {
   if (GET_PICS_EVENTS.includes(event.event)) {
     getPics()
   }
+  switch (event.event) {
+    case 'update_settings':
+      settings.update(() => event.settings)
+      break
+    default:
+      break
+  }
 }
 
-let _ws
+let _ws: ReconnectingWebSocket
 
 export const connectWS = () => {
   if (_ws !== undefined) return
@@ -52,6 +60,10 @@ export const setWinner = (winner: Image) => {
   const loosersObjs = _pics.filter((pic) => pic.path !== winner.path)
   const loosers = loosersObjs.map((v) => v.path)
   _ws.send(JSON.stringify({ event: 'rate', winner: winner.path, loosers }))
+}
+
+export const toggleSetting = (name: string) => {
+  _ws.send(JSON.stringify({ event: 'toggle_setting', name: name }))
 }
 
 export const sendMsg = (msg: { event: string }) => {

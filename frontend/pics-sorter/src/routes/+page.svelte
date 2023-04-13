@@ -1,6 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { picsStore, getPics, connectWS, setWinner as setWinnerStore, sendMsg, sameOrientation } from '../stores'
+  import {
+    picsStore,
+    getPics,
+    connectWS,
+    setWinner as setWinnerStore,
+    sendMsg,
+    settings,
+    toggleSetting
+  } from '../stores'
   import { shortcut } from '../hotkeys'
   import { swipe, pinch } from 'svelte-gestures'
   //import Zoom from 'svelte-zoom'
@@ -18,8 +26,8 @@
   let single: Image | undefined
   let index: number | undefined
   let zoom: Zoom | undefined
-  let navOnBottom = true
 
+  $: navOnBottom = !!$settings.nav
   $: navClass = 'page-nav page-nav-' + (navOnBottom ? 'bottom' : 'top')
 
   const setSingle = (pic: Image) => {
@@ -87,8 +95,8 @@
     if (index === undefined) {
       index = pics.indexOf(single)
     }
-    let inc = direction === 'left' ? 1 : 2;
-    index = (index + inc ) % 3
+    let inc = direction === 'left' ? 1 : 2
+    index = (index + inc) % 3
     single = pics[index]
   }
 
@@ -117,7 +125,7 @@
 
   const addExtraCount = async () => {
     const extra_count = single.extra_count > 0 ? 1 : 2
-    await sendMsg({ event: 'add_extra_count', 'image': single.path, 'count': extra_count})
+    await sendMsg({ event: 'add_extra_count', image: single.path, count: extra_count })
     single.extra_count += extra_count
   }
 
@@ -225,20 +233,22 @@
       <button on:click={() => closeSingle()}>X</button>
       <span>{single.elo_rating}/{single.extra_count}</span>
       <button on:click={() => resetZoom()}>RST</button>
-      <button on:click={() => navOnBottom = !navOnBottom}>MM</button>
+      <button on:click={() => toggleSetting('nav')}>MM</button>
     {:else}
       <button on:click={toggleOrientation}>
-        {#if $sameOrientation}
-          Orientation {$sameOrientation}
+        {#if $settings.same_orientation}
+          Orientation {$settings.same_orientation}
         {:else}
           No Orientation
         {/if}
       </button>
       <span>{w}x{h} => {orientation}</span>
-      <span> {#each pics as image} |{image.elo_rating}/{image.extra_count} {/each}</span>
-      <button on:click={() => sendMsg({event: 'build_top10'})}>Build Top10</button>
-      <button on:click={() => sendMsg({event: 'touch_restart'})}>Reindex</button>
-      <button on:click={() => navOnBottom = !navOnBottom}>Move nav</button>
+      <span>
+        {#each pics as image} |{image.elo_rating}/{image.extra_count} {/each}</span
+      >
+      <button on:click={() => sendMsg({ event: 'build_top10' })}>Build Top10</button>
+      <button on:click={() => sendMsg({ event: 'touch_restart' })}>Reindex</button>
+      <button on:click={() => toggleSetting('nav')}>Move nav</button>
     {/if}
   </div>
 </div>
