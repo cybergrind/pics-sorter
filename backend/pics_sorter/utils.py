@@ -15,6 +15,11 @@ def gen():
 
 
 def move(src: Path, dst_dir: Path):
+    if src.parent == dst_dir:
+        log.debug('File is already in target dir: {src} => {dst_dir}')
+        return src
+
+    dst_path = src
     for suffix in gen():
         new_name = f'{src.stem}{suffix}{src.suffix}'
         dst_path = Path(dst_dir, new_name)
