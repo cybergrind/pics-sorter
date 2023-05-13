@@ -272,8 +272,10 @@
   })
 
   function onTouchStart(e) {
+    e.preventDefault()
     touchScreen = true
     willChange = true
+    const isSingleTouch = e.touches.length === 1
     const isMultiTouch = e.touches.length === 2
     const [touchA, touchB] = e.touches
 
@@ -284,7 +286,7 @@
       fireScale(touchA, touchB)
 
       velocity.down(touchA, touchB)
-    } else {
+    } else if (isSingleTouch) {
       const { pageX, pageY } = touchA
       var now = new Date().getTime()
       if (now - lastTap.time < 250 && Math.hypot(lastTap.x - pageX, lastTap.y - pageY) <= 20) {
@@ -308,15 +310,21 @@
   }
 
   function onTouchMove(e) {
-    if (scale.scaling) {
+    e.preventDefault()
+    const isSingleTouch = e.touches.length === 1
+    const isMultiTouch = e.touches.length === 2
+
+    if (scale.scaling && isMultiTouch) {
       const [touchA, touchB] = e.touches
-      fireScaleMove(touchA, touchB)
-    } else {
+      //fireScaleMove(touchA, touchB)
+      fireScale(touchA, touchB)
+    } else if (isSingleTouch) {
       fireMove(e.touches[0].pageX, e.touches[0].pageY)
     }
   }
 
   function onTouchEnd(e) {
+    e.preventDefault()
     fireUp()
     window.removeEventListener("touchmove", onTouchMove)
     window.removeEventListener("touchend", onTouchEnd)
