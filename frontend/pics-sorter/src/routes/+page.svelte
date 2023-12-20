@@ -13,6 +13,7 @@
   import { swipe, pinch } from 'svelte-gestures'
   //import Zoom from 'svelte-zoom'
   import Zoom from '../lib/zoom/index.svelte'
+  import doubletap from '../lib/doubletap'
 
   import type { Image } from '../types'
 
@@ -26,6 +27,8 @@
   let single: Image | undefined
   let index: number | undefined
   let zoom: Zoom | undefined
+  let zoomMode = false
+  const DEFAULT_ZOOM = 5
 
   $: navOnBottom = !!$settings.nav
   $: navClass = 'page-nav page-nav-' + (navOnBottom ? 'bottom' : 'top')
@@ -78,6 +81,10 @@
   }
 
   const swipeHandler = async (event) => {
+    if (zoomMode) {
+      return
+    }
+
     const { direction } = event.detail
     console.log('Direction:', direction)
 
@@ -89,7 +96,7 @@
     }
 
     const zz = document.querySelector('#zoomed-img')
-    if (zz?.style.transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
+    if (zz && zz.style.transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
       return
     }
     if (index === undefined) {
@@ -101,8 +108,11 @@
   }
 
   const resetZoom = () => {
+    if (zoomMode) {
+      zoomMode = false
+    }
     const zz = document.querySelector('#zoomed-img')
-    if (zz && zz.style.transform && zz.style.transform.indexOf('scale(1)') === -1) {
+    if (zz?.style.transform?.indexOf('scale(1)') === -1) {
       for (let i = 0; i < 10; i++) {
         zoom?.zoomOut()
       }
@@ -127,6 +137,18 @@
     const extra_count = single.extra_count > 0 ? 1 : 2
     await sendMsg({ event: 'add_extra_count', image: single.path, count: extra_count })
     single.extra_count += extra_count
+  }
+
+  const onDoubletap = () => {
+    console.log('doubletap click')
+    zoomMode = !zoomMode
+    if (zoomMode) {
+      setTimeout(() => {
+        for (let i = 0; i < DEFAULT_ZOOM; i++) {
+          zoom?.zoomIn()
+        }
+      }, 30)
+    }
   }
 
   $: orientation = w > h ? 'landscape' : 'portrait'
@@ -174,17 +196,20 @@
           sendMsg({ event: 'restore_last' })
         }
       }}
-      on:click={toggleOrZoomOut}
       aria-hidden="true"
       use:swipe={{ timeframe: 300, minSwipeDistance: 80, touchAction: 'none' }}
       on:swipe={swipeHandler}
     >
-      <Zoom
-        src={single.link}
-        bind:this={zoom}
-        on:load={() => console.log('on Load')}
-        id="zoomed-img"
-      />
+      {#if zoomMode}
+        <Zoom
+          src={single.link}
+          bind:this={zoom}
+          on:load={() => console.log('on Load')}
+          id="zoomed-img"
+        />
+      {:else}
+        <img use:doubletap on:doubletap={onDoubletap} src={single.link} id="solo-img" />
+      {/if}
     </div>
   {:else if pics && pics.length > 0}
     <div
@@ -225,15 +250,16 @@
   {/if}
   <div class={navClass}>
     {#if single}
-      <button on:click|preventDefault={() => nextSingle()}>next</button>
-      <button on:click={() => prevSingle()}>prev</button>
-
-      <button on:click={() => setWinner(single)}>winner</button>
-      <button on:click={() => addExtraCount(single)}>++</button>
-      <button on:click={() => closeSingle()}>X</button>
-      <span>{single.elo_rating}/{single.extra_count}</span>
-      <button on:click={() => resetZoom()}>RST</button>
-      <button on:click={() => toggleSetting('nav')}>MM</button>
+        <button on:click|preventDefault={() => nextSingle()}>next</button>
+        <button on:click={() => prevSingle()}>prev</button>
+        <button on:click={() => setWinner(single)}>winner</button>
+        <button on:click={() => addExtraCount(single)}>++</button>
+        <button on:click={() => closeSingle()}>X</button>
+        <span>{single.elo_rating}/{single.extra_count}</span>
+        <button on:click={() => toggleSetting('nav')}>MM</button>
+      {#if zoomMode}
+        <button on:click={() => resetZoom()}>RST</button>
+      {/if}
     {:else}
       <button on:click={toggleOrientation}>
         {#if $settings.same_orientation}
@@ -280,6 +306,8 @@
     display: flex;
     flex-flow: row wrap;
     padding: 0;
+    max-height: 100vh;
+    max-width: 100vw;
   }
 
   .img-fit {
@@ -289,5 +317,10 @@
   .img-fit > img {
     max-width: 33vw;
     max-height: 97vh;
+  }
+  #solo-img {
+    object-fit: contain;
+    max-width: 100vw;
+    max-height: 100vh;
   }
 </style>

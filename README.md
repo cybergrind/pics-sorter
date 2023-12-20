@@ -4,5 +4,8 @@
 TODO:
 * database
 * land/port => support in api
-* ELO rating
-* support ELO in UI
+* better UI overlay modes:
+ * mode toggle switch => double tap
+ * mode1:
+  * swap to left/right, winner
+ * mode2: zoom
