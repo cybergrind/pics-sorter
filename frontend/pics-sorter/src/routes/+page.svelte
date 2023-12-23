@@ -319,8 +319,9 @@
     max-height: 97vh;
   }
   #solo-img {
-    object-fit: contain;
     max-width: 100vw;
     max-height: 100vh;
+    margin: auto;
+    object-fit: contain;
   }
 </style>
