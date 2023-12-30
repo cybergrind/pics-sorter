@@ -255,7 +255,7 @@
         <button on:click={() => setWinner(single)}>winner</button>
         <button on:click={() => addExtraCount(single)}>++</button>
         <button on:click={() => closeSingle()}>X</button>
-        <span>{single.elo_rating}/{single.extra_count}</span>
+        <span class="contrast">{single.elo_rating}/{single.extra_count}</span>
         <button on:click={() => toggleSetting('nav')}>MM</button>
       {#if zoomMode}
         <button on:click={() => resetZoom()}>RST</button>
@@ -269,7 +269,7 @@
         {/if}
       </button>
       <span>{w}x{h} => {orientation}</span>
-      <span>
+      <span class="contrast">
         {#each pics as image} |{image.elo_rating}/{image.extra_count} {/each}</span
       >
       <button on:click={() => sendMsg({ event: 'build_top10' })}>Build Top10</button>
@@ -323,5 +323,11 @@
     max-height: 100vh;
     margin: auto;
     object-fit: contain;
+    width: 100%;
+  }
+
+  .contrast {
+    color: black;
+    background-color: white;
   }
 </style>
