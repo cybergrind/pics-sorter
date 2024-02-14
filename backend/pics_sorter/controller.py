@@ -1,15 +1,16 @@
 import datetime
 import logging
 import random
+from contextlib import suppress
 from hashlib import sha1
 from pathlib import Path
 from typing import Callable
 
 import PIL.Image
+import pydantic
 from elo import LOSS, rate, WIN
 from pics_sorter.models import Image
 from pics_sorter.utils import move
-import pydantic
 from sqlalchemy import func, text
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -40,10 +41,10 @@ def image_get_size(image: Path) -> tuple[int, int, str, str]:
     return width, height, orientation, sha1_sum
 
 
-
 class Settings(pydantic.BaseModel):
     same_orientation: int = 0
     nav: bool = True
+
 
 class PicsController:
     def __init__(self, path: Path, db: Callable[[], AsyncSession]):
@@ -74,10 +75,10 @@ class PicsController:
 
                     q = select(Image).filter_by(sha1_hash=sha1_hash)
                     duplicate_image = (await self.db.exec(q)).first()
+                    duplicate_exists = False
                     if duplicate_image:
-                        duplicate_exists = (self.path / duplicate_image.path).exists()
-                    else:
-                        duplicate_exists = False
+                        with suppress(OSError):
+                            duplicate_exists = (self.path / duplicate_image.path).exists()
 
                     if duplicate_image and not duplicate_exists:
                         log.info(f'Moved image: {duplicate_image.path} => {rel_path}')
