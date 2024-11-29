@@ -28,11 +28,16 @@
   let index: number | undefined
   let zoom: Zoom | undefined
   let zoomMode = false
+  let isRandom = false
   const DEFAULT_ZOOM = 5
 
   $: navOnBottom = !!$settings.nav
   $: navClass = 'page-nav page-nav-' + (navOnBottom ? 'bottom' : 'top')
 
+  const toggleRandom = () => {
+    isRandom = !isRandom
+    getPics(isRandom)
+  }
   const setSingle = (pic: Image) => {
     index = pics.indexOf(pic)
     single = pics[index]
@@ -47,7 +52,7 @@
 
   const setWinner = (pic: Image) => {
     index = 0
-    setWinnerStore(pic)
+    setWinnerStore(pic, isRandom)
     console.log('SetWinner: ', pic, index)
   }
 
@@ -257,6 +262,11 @@
         <button on:click={() => closeSingle()}>X</button>
         <span class="contrast">{single.elo_rating}/{single.extra_count}</span>
         <button on:click={() => toggleSetting('nav')}>MM</button>
+      {#if isRandom}
+        <button on:click={toggleRandom}>Rnd</button>
+      {:else}
+        <button on:click={toggleRandom}>Ord</button>
+      {/if}
       {#if zoomMode}
         <button on:click={() => resetZoom()}>RST</button>
       {/if}
@@ -274,6 +284,11 @@
       >
       <button on:click={() => sendMsg({ event: 'build_top10' })}>Build Top10</button>
       <button on:click={() => sendMsg({ event: 'touch_restart' })}>Reindex</button>
+      {#if isRandom}
+        <button on:click={toggleRandom}>Rnd</button>
+      {:else}
+        <button on:click={toggleRandom}>Ord</button>
+      {/if}
       <button on:click={() => toggleSetting('nav')}>Move nav</button>
     {/if}
   </div>

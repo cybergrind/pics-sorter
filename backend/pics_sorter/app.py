@@ -28,9 +28,7 @@ def to_link(url_for, rel_image):
     return url_for(DIR, path=str(rel_image))
 
 
-async def get_links(req: Request, num=10):
-    controller: PicsController = app_ctx.get()['controller']
-    images = await controller.get_relative_images(num)
+def get_links(req: Request, images):
     return [
         {
             'link': to_link(req.app.url_path_for, x.path),
@@ -51,12 +49,16 @@ async def index():
 
 
 @root.get('/api/pics/')
-async def pics(req: Request):
+async def pics(req: Request, is_random:bool = False):
     controller: PicsController = app_ctx.get()['controller']
-    images = await get_links(req, num=3)
+    if is_random:
+        images = await controller.get_random_images(num=3)
+    else:
+        images = await controller.get_relative_images(num=3)
+    image_links = get_links(req, images)
     return {
         'success': True,
-        'images': images,
+        'images': image_links,
         'same_orientation': controller.same_orientation,
         'settings': controller.settings,
     }
@@ -81,10 +83,10 @@ async def ws(sock: WebSocket):
             event = msg.get('event')
             if event == 'rate':
                 await controller.rate(msg['winner'], msg['loosers'])
-                await sock.send_json({'event': 'rate_success'})
+                await sock.send_json({'event': 'rate_success', 'is_random': msg.get('is_random', False)})
             elif event == 'hide':
                 await controller.hide(msg['image'])
-                await sock.send_json({'event': 'hide_success'})
+                await sock.send_json({'event': 'hide_success', 'is_random': msg.get('is_random', False)})
             elif event == 'toggle_setting':
                 settings = controller.settings
                 current_value = getattr(settings, msg['name'])
@@ -96,7 +98,7 @@ async def ws(sock: WebSocket):
                 settings.same_orientation = (settings.same_orientation + 1) % 3
             elif event == 'restore_last':
                 await controller.restore_last()
-                await sock.send_json({'event': 'restore_success'})
+                await sock.send_json({'event': 'restore_success', 'is_random': msg.get('is_random', False)})
             elif event == 'build_top10':
                 await controller.build_top10()
             elif event == 'add_extra_count':

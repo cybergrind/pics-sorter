@@ -152,6 +152,17 @@ class PicsController:
         images = (await db.exec(q)).all()
         return images
 
+    async def get_random_images(self, num) -> list[Image]:
+        async with self.session_maker() as db:
+            q = (
+                select(Image)
+                .filter(Image.extra_count == 0, ~Image.hidden)
+                .order_by(func.random())
+                .limit(num)
+            )
+            images = (await db.exec(q)).all()
+            return images
+
     async def get_relative_images(self, num) -> list[Image]:
         """
         if have extra_count = select 1 image

@@ -12,8 +12,8 @@ picsStore.subscribe((value) => {
 
 export const settings: Writable<Record<string, any>> = writable({})
 
-export async function getPics() {
-  const response = await axios.get(`${window.location.origin}/api/pics/`)
+export async function getPics(is_random = false) {
+  const response = await axios.get(`${window.location.origin}/api/pics/`, {params: {is_random}})
   console.log(response.data)
   picsStore.set(response.data.images)
   settings.set(response.data.settings)
@@ -33,7 +33,7 @@ export const addEvent = (event) => {
   console.log('Event: ', event)
 
   if (GET_PICS_EVENTS.includes(event.event)) {
-    getPics()
+    getPics(event.is_random)
   }
   switch (event.event) {
     case 'update_settings':
@@ -56,10 +56,10 @@ export const connectWS = () => {
   })
 }
 
-export const setWinner = (winner: Image) => {
+export const setWinner = (winner: Image, isRandom: false) => {
   const loosersObjs = _pics.filter((pic) => pic.path !== winner.path)
   const loosers = loosersObjs.map((v) => v.path)
-  _ws.send(JSON.stringify({ event: 'rate', winner: winner.path, loosers }))
+  _ws.send(JSON.stringify({ event: 'rate', winner: winner.path, loosers, is_random: isRandom }))
 }
 
 export const toggleSetting = (name: string) => {
